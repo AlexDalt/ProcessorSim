@@ -10,9 +10,9 @@ class instruction
 {
 public:
 	Operations op;
-	std::string dest;
-	std::string a1;
-	std::string a2;
+	string dest;
+	string a1;
+	string a2;
 
 	instruction ( std::string inst="NOP", std::string d="", std::string b1="", std::string b2="" )
 	{
@@ -74,6 +74,11 @@ public:
 	int pc;
 	int r[8];
 	int p[32];
+
+	register_file()
+	{
+		pc = 0;
+	}
 };
 
 class fetch_decode_execute
@@ -88,7 +93,14 @@ class write_back
 
 class processor
 {
+public:
+	RAM *ram;
+	register_file rf;
 
+	processor ( RAM *rp )
+	{
+		ram = rp;
+	}
 };
 
 int main ( int argc, char *argv[] )
@@ -99,25 +111,26 @@ int main ( int argc, char *argv[] )
 		return -1;
 	}
 
-	std::ifstream file ( argv[1] );
-	std::string line;
+	ifstream file ( argv[1] );
+	string line;
 	int num_lines = 0;
 
-	while (std::getline ( file, line ))
+	while (getline ( file, line ))
 		num_lines++;
 
 	file.clear ();
-	file.seekg ( 0, std::ios::beg );
+	file.seekg ( 0, ios::beg );
 	RAM ram ( num_lines );
+	processor p ( &ram );
 	int inst_index = 0;
 
-	while (std::getline ( file, line ))
+	while (getline ( file, line ))
 	{
-		std::istringstream iss( line );
-		std::string inst = "";
-		std::string dest = "";
-		std::string a1 = "";
-		std::string a2 = "";
+		istringstream iss( line );
+		string inst = "";
+		string dest = "";
+		string a1 = "";
+		string a2 = "";
 
 		iss >> inst;
 
@@ -125,7 +138,7 @@ int main ( int argc, char *argv[] )
 		{
 			iss >> a2;
 			instruction next_inst ( inst, dest, a1, a2 );
-			ram.add ( inst_index, next_inst );
+			p.ram->add ( inst_index, next_inst );
 		}
 		else
 		{
@@ -139,10 +152,10 @@ int main ( int argc, char *argv[] )
 	for ( int i = 0 ; i < num_lines ; i++ )
 	{
 		cout << "Opp " << i << " :";
-		cout << " op - " << ram.code[i].op;
-		cout << " dest - " << ram.code[i].dest;
-		cout << " a1 - " << ram.code[i].a1;
-		cout << " a2 - " << ram.code[i].a2 << endl;
+		cout << " op - " << p.ram->code[i].op;
+		cout << " dest - " << p.ram->code[i].dest;
+		cout << " a1 - " << p.ram->code[i].a1;
+		cout << " a2 - " << p.ram->code[i].a2 << endl;
 	}
 	return 0;
 }
