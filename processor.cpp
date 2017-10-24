@@ -81,14 +81,46 @@ public:
 	}
 };
 
-class fetch_decode_execute
-{
-
-};
-
 class write_back
 {
+public:
+	register_file *rf;
 
+	write_back ( register_file *reg_pointer )
+	{
+		rf = reg_pointer;
+	}
+
+	void buffer_reg_write ( int reg_no, int value )
+	{
+	}
+
+	void write ()
+	{
+	}
+};
+
+class fetch_decode_execute
+{
+public:
+	write_back *output;
+	RAM *ram;
+	register_file *rf;
+
+	fetch_decode_execute ( RAM *rp, register_file *rf_in, write_back *out )
+	{
+		ram = rp;
+		rf = rf_in;
+		output = out;
+	}
+
+	void execute ()
+	{
+	}
+
+	void push ()
+	{
+	}
 };
 
 class processor
@@ -96,10 +128,26 @@ class processor
 public:
 	RAM *ram;
 	register_file rf;
+	write_back wb;
+	fetch_decode_execute fde;
 
 	processor ( RAM *rp )
 	{
+		wb ( &rf );
+		fetch_decode_execute ( rp, &rf, &wb );
 		ram = rp;
+	}
+
+	void tick ()
+	{
+		fde.execute();
+		wb.write();
+	}
+
+	void tock ()
+	{
+		fde.push();
+		rf.pc++;
 	}
 };
 
@@ -157,5 +205,6 @@ int main ( int argc, char *argv[] )
 		cout << " a1 - " << p.ram->code[i].a1;
 		cout << " a2 - " << p.ram->code[i].a2 << endl;
 	}
+
 	return 0;
 }
