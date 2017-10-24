@@ -132,11 +132,10 @@ public:
 	fetch_decode_execute fde;
 
 	processor ( RAM *rp )
-	{
-		wb ( &rf );
-		fetch_decode_execute ( rp, &rf, &wb );
-		ram = rp;
-	}
+		: wb ( &rf )
+		, fde ( rp, &rf, &wb )
+		, ram ( rp )
+	{}
 
 	void tick ()
 	{
