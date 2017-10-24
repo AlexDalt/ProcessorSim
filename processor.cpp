@@ -2,30 +2,45 @@
 #include <string>
 #include <iostream>
 #include <sstream>
+#include <queue>
 using namespace std;
 
-enum Operations { NOP, ADD, LD };
+#define NUM_ARCH_REG 8
+#define NUM_PHYS_REG 32
+
+enum Operations { NOP, ADD, LDI };
 
 class instruction
 {
 public:
 	Operations op;
-	string dest;
-	string a1;
-	string a2;
+	int dest;
+	int a1;
+	int a2;
 
-	instruction ( std::string inst="NOP", std::string d="", std::string b1="", std::string b2="" )
+	instruction ( string inst="NOP", string d="", string b1="", string b2="" )
 	{
-		if ( inst.string::compare ( "NOP" ) == 0 )
+		if ( inst.compare ( "NOP" ) == 0 )
 			op = NOP;
-		else if ( inst.string::compare ( "ADD" ) == 0 )
+		else if ( inst.compare ( "ADD" ) == 0 )
 			op = ADD;
-		else if ( inst.string::compare ( "LD" ) == 0 )
-			op = LD;
+		else if ( inst.compare ( "LDI" ) == 0 )
+			op = LDI;
 
-		dest = d;
-		a1 = b1;
-		a2 = b2;
+		try
+		{
+			if ( !(d.empty()) )
+				dest = stoi ( d, nullptr, 10 );
+			if ( !(b1.empty()) )
+				a1 = stoi ( b1, nullptr, 10 );
+			if ( !(b2.empty())  )
+				a2 = stoi ( b2, nullptr, 10 );
+		}
+		catch ( exception e )
+		{
+			cerr << "Error: unable to parse assembly into internal instructions" << endl;
+			cerr << "inst: " << inst << ", dest: " << dest << ", arg1: " << b1 << ", arg2: " << b2 <<endl;
+		}
 	}
 };
 
@@ -49,7 +64,7 @@ public:
 		}
 		catch ( int e )
 		{
-			cerr << "inserting instruction in RAM that doesn't exist";
+			cerr << "inserting instruction in RAM that doesn't exist" << endl;
 		}
 		return 0;
 	}
@@ -72,8 +87,8 @@ class register_file
 {
 public:
 	int pc;
-	int r[8];
-	int p[32];
+	int r[NUM_ARCH_REG];
+	int p[NUM_PHYS_REG];
 
 	register_file()
 	{
@@ -81,45 +96,78 @@ public:
 	}
 };
 
+/*
+
 class write_back
 {
 public:
 	register_file *rf;
+	queue <instruction> buffer;
 
 	write_back ( register_file *reg_pointer )
 	{
 		rf = reg_pointer;
 	}
 
-	void buffer_reg_write ( int reg_no, int value )
+	void buffer_write ( instruction *inst )
 	{
+		instruction i = *inst;
+		buffer.push ( i );
 	}
 
 	void write ()
 	{
+		if ( !buffer.empty() ){
+			instruction i = buffer.front();
+			buffer.pop();
+			cout << "	write - r" << i.dest << " " << i.a1 << endl;
+			rf->r[ i.dest ] = i.a1;
+		}
+		else
+			cout << "	write - buffer empty" << endl;
 	}
 };
+
+*/
 
 class fetch_decode_execute
 {
 public:
-	write_back *output;
+	//write_back *wb;
 	RAM *ram;
 	register_file *rf;
+	instruction inst;
 
-	fetch_decode_execute ( RAM *rp, register_file *rf_in, write_back *out )
+	fetch_decode_execute ( RAM *rp, register_file *rf_in/*, write_back *out */)
 	{
 		ram = rp;
 		rf = rf_in;
-		output = out;
+		//wb = out;
 	}
 
 	void execute ()
 	{
+		inst = ram->code[rf->pc];
+		switch ( inst.op )
+		{
+			case NOP:
+				cout << "	fde - NOP" << endl;
+				break;
+			case ADD:
+				cout << "	fde - ADD r" << inst.dest << " r" << inst.a1 << " r" << inst.a2 << endl;
+				rf->r[ inst.dest ] = rf->r[ inst.a1 ] + rf->r[ inst.a2 ];
+				break;
+			case LDI:
+				cout << "	fde - LDI r" << inst.dest << " " << inst.a1 << endl;
+				rf->r[ inst.dest ] = inst.a1;
+				break;
+		}
 	}
 
 	void push ()
 	{
+		//cout << "	fde - buffer write" << endl;
+		//wb->buffer_write ( &inst );
 	}
 };
 
@@ -128,25 +176,34 @@ class processor
 public:
 	RAM *ram;
 	register_file rf;
-	write_back wb;
+	//write_back wb;
 	fetch_decode_execute fde;
+	int cycles;
 
 	processor ( RAM *rp )
-		: wb ( &rf )
-		, fde ( rp, &rf, &wb )
+		:/* wb ( &rf )
+		,*/ fde ( rp, &rf /*, &wb*/ )
 		, ram ( rp )
-	{}
+	{
+		cycles = 0;
+	}
 
 	void tick ()
 	{
+		cout << "Tick:" << endl;
+		for ( int i = 0 ; i < NUM_ARCH_REG ; i++ )
+			cout << "r" << i << " - " << rf.r[ i ] << ", ";
+		cout << endl;
 		fde.execute();
-		wb.write();
+		//wb.write();
 	}
 
 	void tock ()
 	{
-		fde.push();
+		cout << "Tock:" << endl;
+		//fde.push();
 		rf.pc++;
+		cycles++;
 	}
 };
 
@@ -203,6 +260,23 @@ int main ( int argc, char *argv[] )
 		cout << " dest - " << p.ram->code[i].dest;
 		cout << " a1 - " << p.ram->code[i].a1;
 		cout << " a2 - " << p.ram->code[i].a2 << endl;
+	}
+
+	char a = getchar();
+	int i = 0;
+
+	while ( a != 'x' )
+	{
+		if ( i % 2 == 0 )
+		{
+			p.tick();
+		}
+		else
+		{
+			p.tock();
+		}
+		i++;
+		a = getchar();
 	}
 
 	return 0;

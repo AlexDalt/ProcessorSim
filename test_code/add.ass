@@ -1,4 +1,4 @@
-LD r0 1
-LD r1 2
-ADD r0 r0 r1
+LDI 0 1
+LDI 1 2
+ADD 0 0 1
 NOP
