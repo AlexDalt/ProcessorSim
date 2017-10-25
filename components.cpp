@@ -16,6 +16,8 @@ instruction::instruction ( string inst, string d, string b1, string b2 )
 		op = MUL;
 	else if ( inst.compare ( "DIV" ) == 0 )
 		op = DIV;
+	else if ( inst.compare ( "LD" ) == 0 )
+		op = LD;
 	else if ( inst.compare ( "LDI" ) == 0 )
 		op = LDI;
 	else if ( inst.compare ( "BEQ" ) == 0 )
@@ -117,6 +119,10 @@ void fetch_decode_execute::execute ()
 			cout << "	fde - DIV r" << inst.dest << " r" << inst.a1 << " r" << inst.a2 << endl;
 			rf->r[ inst.dest ] = rf->r[ inst.a1 ] / rf->r[ inst.a2 ];
 			break;
+		case LD:
+			cout << "	fde - LD r" << inst.dest << " " << inst.a1 << endl;
+			rf->r[ inst.dest ] = ram->data[ inst.a1 ];
+			break;
 		case LDI:
 			cout << "	fde - LDI r" << inst.dest << " " << inst.a1 << endl;
 			rf->r[ inst.dest ] = inst.a1;
@@ -143,13 +149,14 @@ void fetch_decode_execute::push ()
 	//wb->buffer_write ( &inst );
 }
 
-processor::processor ( int lines, RAM *rp )
+processor::processor ( int code, int data, RAM *rp )
 	:/* wb ( &rf )
 	,*/ ram ( rp )
 	, fde ( rp, &rf /*, &wb*/ )
 {
 	cycles = 0;
-	num_lines = lines;
+	num_code = code;
+	num_data = data;
 }
 
 int processor::tick ()
@@ -157,6 +164,9 @@ int processor::tick ()
 	cout << "Tick:" << endl;
 	for ( int i = 0 ; i < NUM_ARCH_REG ; i++ )
 		cout << "r" << i << " - " << rf.r[ i ] << ", ";
+	cout << endl;
+	for ( int j = 0 ; j < num_data ; j++)
+		cout << "[" << j << "] " << ram->data[j] << endl;
 	cout << endl;
 	fde.execute();
 	//wb.write();
@@ -171,7 +181,7 @@ int processor::tock ()
 	rf.pc++;
 	cycles++;
 
-	if ( rf.pc >= num_lines )
+	if ( rf.pc >= num_code )
 		return 1;
 	else
 		return 0;

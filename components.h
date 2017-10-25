@@ -9,7 +9,7 @@ using namespace std;
 #define NUM_ARCH_REG 8
 #define NUM_PHYS_REG 32
 
-enum Operations { NOP, ADD, ADDI, SUB, SUBI, MUL, DIV, LDI, BEQ, J, JR };
+enum Operations { NOP, ADD, ADDI, SUB, SUBI, MUL, DIV, LD, LDI, BEQ, J, JR };
 
 class instruction
 {
@@ -97,10 +97,10 @@ public:
 	//write_back wb;
 	fetch_decode_execute fde;
 	int cycles;
-	int num_lines;
+	int num_code;
+	int num_data;
 
-	processor ( int lines, RAM *rp );
+	processor ( int code, int data, RAM *rp );
 	int tick ();
 	int tock ();
 };
-

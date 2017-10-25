@@ -10,43 +10,73 @@ int main ( int argc, char *argv[] )
 
 	ifstream file ( argv[1] );
 	string line;
-	int num_lines = 0;
-
-	while (getline ( file, line ))
-		num_lines++;
-
-	file.clear ();
-	file.seekg ( 0, ios::beg );
-	RAM ram ( num_lines );
-	processor p ( num_lines, &ram );
-	int inst_index = 0;
+	int num_code= 0;
+	int data = 1;
+	int num_data = 0;
 
 	while (getline ( file, line ))
 	{
-		istringstream iss( line );
-		string inst = "";
-		string dest = "";
-		string a1 = "";
-		string a2 = "";
-
-		iss >> inst;
-
-		if ( !( iss >> dest && iss >> a1 ) || inst.compare("NOP") )
+		if ( data )
 		{
-			iss >> a2;
-			instruction next_inst ( inst, dest, a1, a2 );
-			p.ram->add ( inst_index, next_inst );
+			if ( line.empty() )
+				data = 0;
+			else
+				num_data++;
 		}
 		else
 		{
-			cerr << "Error: unparseable assembly\n";
-			return -1;
+			num_code++;
 		}
-
-		inst_index++;
 	}
 
-	for ( int i = 0 ; i < num_lines ; i++ )
+	file.clear ();
+	file.seekg ( 0, ios::beg );
+	RAM ram ( num_code, num_data );
+	processor p ( num_code, num_data, &ram );
+	int inst_index = 0;
+	int data_index = 0;
+
+	data = 1;
+
+	while (getline ( file, line ))
+	{
+		if ( data )
+		{
+			if ( line.empty() )
+				data = 0;
+			else
+			{
+				p.ram->add ( data_index, stoi( line ) );
+				data_index++;
+			}
+		}
+		else
+		{
+			istringstream iss( line );
+			string inst = "";
+			string dest = "";
+			string a1 = "";
+			string a2 = "";
+
+			iss >> inst;
+
+			if ( !( iss >> dest && iss >> a1 ) || inst.compare("NOP") )
+			{
+				iss >> a2;
+				instruction next_inst ( inst, dest, a1, a2 );
+				p.ram->add ( inst_index, next_inst );
+			}
+			else
+			{
+				cerr << "Error: unparseable assembly\n";
+				return -1;
+			}
+
+			inst_index++;
+		}
+	}
+
+	for ( int i = 0 ; i < num_code ; i++ )
 	{
 		cout << "Opp " << i << " :";
 		cout << " op - " << p.ram->code[i].op;
