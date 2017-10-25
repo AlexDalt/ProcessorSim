@@ -20,7 +20,6 @@ NOP			// no opperation
 ```
 
 ## TODO
-* Fix large memory
 * Write benchmark programs
 	* Standard kernels (eg. "Livermore Loops")
 	* Sorting algorithms (eg. bubble sort + quick sort)

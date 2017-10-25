@@ -88,9 +88,13 @@ int main ( int argc, char *argv[] )
 	char a = getchar();
 	int i = 0;
 	int finished = 0;
+	bool run = false;
 
-	while ( a != 'x' && !finished)
+	while ( (run || a != 'x') && !finished )
 	{
+		if ( a == 'r' )
+			run = true;
+
 		if ( i % 2 == 0 )
 		{
 			p.tick();
@@ -100,7 +104,9 @@ int main ( int argc, char *argv[] )
 			finished = p.tock();
 		}
 		i++;
-		a = getchar();
+
+		if ( !run )
+			a = getchar();
 	}
 
 	return 0;
