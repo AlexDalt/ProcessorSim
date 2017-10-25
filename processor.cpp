@@ -8,7 +8,7 @@ using namespace std;
 #define NUM_ARCH_REG 8
 #define NUM_PHYS_REG 32
 
-enum Operations { NOP, ADD, ADDI, SUB, SUBI, LDI };
+enum Operations { NOP, ADD, ADDI, SUB, SUBI, MUL, DIV, LDI };
 
 class instruction
 {
@@ -30,6 +30,10 @@ public:
 			op = SUB;
 		else if ( inst.compare ( "SUBI" ) == 0 )
 			op = SUBI;
+		else if ( inst.compare ( "MUL" ) == 0 )
+			op = MUL;
+		else if ( inst.compare ( "DIV" ) == 0 )
+			op = DIV;
 		else if ( inst.compare ( "LDI" ) == 0 )
 			op = LDI;
 
@@ -174,6 +178,14 @@ public:
 			case SUBI:
 				cout << "	fde - SUBI r" << inst.dest << " r" << inst.a1 << " " << inst.a2 << endl;
 				rf->r[ inst.dest ] = rf->r[ inst.a1 ] - inst.a2;
+				break;
+			case MUL:
+				cout << "	fde - MUL r" << inst.dest << " r" << inst.a1 << " r" << inst.a2 << endl;
+				rf->r[ inst.dest ] = rf->r[ inst.a1 ] * rf->r[ inst.a2 ];
+				break;
+			case DIV:
+				cout << "	fde - DIV r" << inst.dest << " r" << inst.a1 << " r" << inst.a2 << endl;
+				rf->r[ inst.dest ] = rf->r[ inst.a1 ] / rf->r[ inst.a2 ];
 				break;
 			case LDI:
 				cout << "	fde - LDI r" << inst.dest << " " << inst.a1 << endl;
