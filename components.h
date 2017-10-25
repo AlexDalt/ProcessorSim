@@ -85,9 +85,7 @@ public:
 	instruction inst;
 
 	fetch_decode_execute ( RAM *rp, register_file *rf_in/*, write_back *out */);
-
 	void execute ();
-
 	void push ();
 };
 
@@ -102,9 +100,7 @@ public:
 	int num_lines;
 
 	processor ( int lines, RAM *rp );
-
 	int tick ();
-
 	int tock ();
 };
 
