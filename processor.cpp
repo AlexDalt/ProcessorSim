@@ -201,8 +201,8 @@ public:
 
 	processor ( int lines, RAM *rp )
 		:/* wb ( &rf )
-		,*/ fde ( rp, &rf /*, &wb*/ )
-		, ram ( rp )
+		,*/ ram ( rp )
+		, fde ( rp, &rf /*, &wb*/ )
 	{
 		cycles = 0;
 		num_lines = lines;

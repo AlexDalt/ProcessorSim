@@ -6,10 +6,10 @@
 ```
 ADD dest opp1 opp2		// *dest = *opp1 + *opp2
 ADDI dest opp1 const	// *dest = *opp1 + const
-LDI dest const			// *dest = const
-NOP						// no opperation
 SUB dest opp1 opp2 		// *dest = *opp1 - *opp2
 SUBI dest opp1 const	// *dest = *opp1 - const
+LDI dest const			// *dest = const
+NOP						// no opperation
 
 ```
 
