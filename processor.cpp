@@ -8,7 +8,7 @@ using namespace std;
 #define NUM_ARCH_REG 8
 #define NUM_PHYS_REG 32
 
-enum Operations { NOP, ADD, LDI };
+enum Operations { NOP, ADD, ADDI, SUB, SUBI, LDI };
 
 class instruction
 {
@@ -24,6 +24,12 @@ public:
 			op = NOP;
 		else if ( inst.compare ( "ADD" ) == 0 )
 			op = ADD;
+		else if ( inst.compare ( "ADDI" ) == 0 )
+			op = ADDI;
+		else if ( inst.compare ( "SUB" ) == 0 )
+			op = SUB;
+		else if ( inst.compare ( "SUBI" ) == 0 )
+			op = SUBI;
 		else if ( inst.compare ( "LDI" ) == 0 )
 			op = LDI;
 
@@ -157,6 +163,18 @@ public:
 				cout << "	fde - ADD r" << inst.dest << " r" << inst.a1 << " r" << inst.a2 << endl;
 				rf->r[ inst.dest ] = rf->r[ inst.a1 ] + rf->r[ inst.a2 ];
 				break;
+			case ADDI:
+				cout << "	fde - ADDI r" << inst.dest << " r" << inst.a1 << " " << inst.a2 << endl;
+				rf->r[ inst.dest ] = rf->r[ inst.a1 ] + inst.a2;
+				break;
+			case SUB:
+				cout << "	fde - SUB r" << inst.dest << " r" << inst.a1 << " r" << inst.a2 << endl;
+				rf->r[ inst.dest ] = rf->r[ inst.a1 ] - rf->r[ inst.a2 ];
+				break;
+			case SUBI:
+				cout << "	fde - SUBI r" << inst.dest << " r" << inst.a1 << " " << inst.a2 << endl;
+				rf->r[ inst.dest ] = rf->r[ inst.a1 ] - inst.a2;
+				break;
 			case LDI:
 				cout << "	fde - LDI r" << inst.dest << " " << inst.a1 << endl;
 				rf->r[ inst.dest ] = inst.a1;
@@ -179,16 +197,18 @@ public:
 	//write_back wb;
 	fetch_decode_execute fde;
 	int cycles;
+	int num_lines;
 
-	processor ( RAM *rp )
+	processor ( int lines, RAM *rp )
 		:/* wb ( &rf )
 		,*/ fde ( rp, &rf /*, &wb*/ )
 		, ram ( rp )
 	{
 		cycles = 0;
+		num_lines = lines;
 	}
 
-	void tick ()
+	int tick ()
 	{
 		cout << "Tick:" << endl;
 		for ( int i = 0 ; i < NUM_ARCH_REG ; i++ )
@@ -196,14 +216,21 @@ public:
 		cout << endl;
 		fde.execute();
 		//wb.write();
+
+		return 0;
 	}
 
-	void tock ()
+	int tock ()
 	{
 		cout << "Tock:" << endl;
 		//fde.push();
 		rf.pc++;
 		cycles++;
+
+		if ( rf.pc >= num_lines )
+			return 1;
+		else
+			return 0;
 	}
 };
 
@@ -225,7 +252,7 @@ int main ( int argc, char *argv[] )
 	file.clear ();
 	file.seekg ( 0, ios::beg );
 	RAM ram ( num_lines );
-	processor p ( &ram );
+	processor p ( num_lines, &ram );
 	int inst_index = 0;
 
 	while (getline ( file, line ))
@@ -264,8 +291,9 @@ int main ( int argc, char *argv[] )
 
 	char a = getchar();
 	int i = 0;
+	int finished = 0;
 
-	while ( a != 'x' )
+	while ( a != 'x' && !finished)
 	{
 		if ( i % 2 == 0 )
 		{
@@ -273,7 +301,7 @@ int main ( int argc, char *argv[] )
 		}
 		else
 		{
-			p.tock();
+			finished = p.tock();
 		}
 		i++;
 		a = getchar();
