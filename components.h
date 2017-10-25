@@ -9,7 +9,7 @@ using namespace std;
 #define NUM_ARCH_REG 8
 #define NUM_PHYS_REG 32
 
-enum Operations { NOP, ADD, ADDI, SUB, SUBI, MUL, DIV, LDI, BEQ, J };
+enum Operations { NOP, ADD, ADDI, SUB, SUBI, MUL, DIV, LDI, BEQ, J, JR };
 
 class instruction
 {
