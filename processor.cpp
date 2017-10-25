@@ -1,250 +1,162 @@
-#include <fstream>
-#include <string>
-#include <iostream>
-#include <sstream>
-#include <queue>
-using namespace std;
+#include "processor.h"
 
-#define NUM_ARCH_REG 8
-#define NUM_PHYS_REG 32
-
-enum Operations { NOP, ADD, ADDI, SUB, SUBI, MUL, DIV, LDI };
-
-class instruction
+instruction::instruction ( string inst, string d, string b1, string b2 )
 {
-public:
-	Operations op;
-	int dest;
-	int a1;
-	int a2;
+	if ( inst.compare ( "NOP" ) == 0 )
+		op = NOP;
+	else if ( inst.compare ( "ADD" ) == 0 )
+		op = ADD;
+	else if ( inst.compare ( "ADDI" ) == 0 )
+		op = ADDI;
+	else if ( inst.compare ( "SUB" ) == 0 )
+		op = SUB;
+	else if ( inst.compare ( "SUBI" ) == 0 )
+		op = SUBI;
+	else if ( inst.compare ( "MUL" ) == 0 )
+		op = MUL;
+	else if ( inst.compare ( "DIV" ) == 0 )
+		op = DIV;
+	else if ( inst.compare ( "LDI" ) == 0 )
+		op = LDI;
 
-	instruction ( string inst="NOP", string d="", string b1="", string b2="" )
+	try
 	{
-		if ( inst.compare ( "NOP" ) == 0 )
-			op = NOP;
-		else if ( inst.compare ( "ADD" ) == 0 )
-			op = ADD;
-		else if ( inst.compare ( "ADDI" ) == 0 )
-			op = ADDI;
-		else if ( inst.compare ( "SUB" ) == 0 )
-			op = SUB;
-		else if ( inst.compare ( "SUBI" ) == 0 )
-			op = SUBI;
-		else if ( inst.compare ( "MUL" ) == 0 )
-			op = MUL;
-		else if ( inst.compare ( "DIV" ) == 0 )
-			op = DIV;
-		else if ( inst.compare ( "LDI" ) == 0 )
-			op = LDI;
-
-		try
-		{
-			if ( !(d.empty()) )
-				dest = stoi ( d, nullptr, 10 );
-			if ( !(b1.empty()) )
-				a1 = stoi ( b1, nullptr, 10 );
-			if ( !(b2.empty())  )
-				a2 = stoi ( b2, nullptr, 10 );
-		}
-		catch ( exception e )
-		{
-			cerr << "Error: unable to parse assembly into internal instructions" << endl;
-			cerr << "inst: " << inst << ", dest: " << dest << ", arg1: " << b1 << ", arg2: " << b2 <<endl;
-		}
+		if ( !(d.empty()) )
+			dest = stoi ( d, nullptr, 10 );
+		if ( !(b1.empty()) )
+			a1 = stoi ( b1, nullptr, 10 );
+		if ( !(b2.empty())  )
+			a2 = stoi ( b2, nullptr, 10 );
 	}
-};
+	catch ( exception e )
+	{
+		cerr << "Error: unable to parse assembly into internal instructions" << endl;
+		cerr << "inst: " << inst << ", dest: " << dest << ", arg1: " << b1 << ", arg2: " << b2 <<endl;
+	}
+}
 
-class RAM
+RAM::RAM ( int code_size, int data_size )
 {
-public:
-	instruction *code;
-	int *data;
+	code = new instruction[code_size];
+	data = new int[data_size];
+}
 
-	RAM ( int code_size=0, int data_size=0 )
+int RAM::add ( int index, instruction i )
+{
+	try
 	{
-		code = new instruction[code_size];
-		data = new int[data_size];
+		code[index] = i;
 	}
-
-	int add ( int index, instruction i )
+	catch ( int e )
 	{
-		try
-		{
-			code[index] = i;
-		}
-		catch ( int e )
-		{
-			cerr << "inserting instruction in RAM that doesn't exist" << endl;
-		}
+		cerr << "inserting instruction in RAM that doesn't exist" << endl;
+	}
+	return 0;
+}
+
+int RAM::add ( int index, int d )
+{
+	try
+	{
+		data[index] = d;
+	}
+	catch ( int e )
+	{
+		cerr << "inserting data in RAM that doesn't exist";
+	}
+	return 0;
+}
+
+register_file::register_file()
+{
+	pc = 0;
+}
+
+fetch_decode_execute::fetch_decode_execute ( RAM *rp, register_file *rf_in/*, write_back *out */)
+{
+	ram = rp;
+	rf = rf_in;
+	//wb = out;
+}
+
+void fetch_decode_execute::execute ()
+{
+	inst = ram->code[rf->pc];
+	switch ( inst.op )
+	{
+		case NOP:
+			cout << "	fde - NOP" << endl;
+			break;
+		case ADD:
+			cout << "	fde - ADD r" << inst.dest << " r" << inst.a1 << " r" << inst.a2 << endl;
+			rf->r[ inst.dest ] = rf->r[ inst.a1 ] + rf->r[ inst.a2 ];
+			break;
+		case ADDI:
+			cout << "	fde - ADDI r" << inst.dest << " r" << inst.a1 << " " << inst.a2 << endl;
+			rf->r[ inst.dest ] = rf->r[ inst.a1 ] + inst.a2;
+			break;
+		case SUB:
+			cout << "	fde - SUB r" << inst.dest << " r" << inst.a1 << " r" << inst.a2 << endl;
+			rf->r[ inst.dest ] = rf->r[ inst.a1 ] - rf->r[ inst.a2 ];
+			break;
+		case SUBI:
+			cout << "	fde - SUBI r" << inst.dest << " r" << inst.a1 << " " << inst.a2 << endl;
+			rf->r[ inst.dest ] = rf->r[ inst.a1 ] - inst.a2;
+			break;
+		case MUL:
+			cout << "	fde - MUL r" << inst.dest << " r" << inst.a1 << " r" << inst.a2 << endl;
+			rf->r[ inst.dest ] = rf->r[ inst.a1 ] * rf->r[ inst.a2 ];
+			break;
+		case DIV:
+			cout << "	fde - DIV r" << inst.dest << " r" << inst.a1 << " r" << inst.a2 << endl;
+			rf->r[ inst.dest ] = rf->r[ inst.a1 ] / rf->r[ inst.a2 ];
+			break;
+		case LDI:
+			cout << "	fde - LDI r" << inst.dest << " " << inst.a1 << endl;
+			rf->r[ inst.dest ] = inst.a1;
+			break;
+	}
+}
+
+void fetch_decode_execute::push ()
+{
+	//cout << "	fde - buffer write" << endl;
+	//wb->buffer_write ( &inst );
+}
+
+processor::processor ( int lines, RAM *rp )
+	:/* wb ( &rf )
+	,*/ ram ( rp )
+	, fde ( rp, &rf /*, &wb*/ )
+{
+	cycles = 0;
+	num_lines = lines;
+}
+
+int processor::tick ()
+{
+	cout << "Tick:" << endl;
+	for ( int i = 0 ; i < NUM_ARCH_REG ; i++ )
+		cout << "r" << i << " - " << rf.r[ i ] << ", ";
+	cout << endl;
+	fde.execute();
+	//wb.write();
+
+	return 0;
+}
+
+int processor::tock ()
+{
+	cout << "Tock:" << endl;
+	//fde.push();
+	rf.pc++;
+	cycles++;
+
+	if ( rf.pc >= num_lines )
+		return 1;
+	else
 		return 0;
-	}
-
-	int add ( int index, int d )
-	{
-		try
-		{
-			data[index] = d;
-		}
-		catch ( int e )
-		{
-			cerr << "inserting data in RAM that doesn't exist";
-		}
-		return 0;
-	}
-};
-
-class register_file
-{
-public:
-	int pc;
-	int r[NUM_ARCH_REG];
-	int p[NUM_PHYS_REG];
-
-	register_file()
-	{
-		pc = 0;
-	}
-};
-
-/*
-
-class write_back
-{
-public:
-	register_file *rf;
-	queue <instruction> buffer;
-
-	write_back ( register_file *reg_pointer )
-	{
-		rf = reg_pointer;
-	}
-
-	void buffer_write ( instruction *inst )
-	{
-		instruction i = *inst;
-		buffer.push ( i );
-	}
-
-	void write ()
-	{
-		if ( !buffer.empty() ){
-			instruction i = buffer.front();
-			buffer.pop();
-			cout << "	write - r" << i.dest << " " << i.a1 << endl;
-			rf->r[ i.dest ] = i.a1;
-		}
-		else
-			cout << "	write - buffer empty" << endl;
-	}
-};
-
-*/
-
-class fetch_decode_execute
-{
-public:
-	//write_back *wb;
-	RAM *ram;
-	register_file *rf;
-	instruction inst;
-
-	fetch_decode_execute ( RAM *rp, register_file *rf_in/*, write_back *out */)
-	{
-		ram = rp;
-		rf = rf_in;
-		//wb = out;
-	}
-
-	void execute ()
-	{
-		inst = ram->code[rf->pc];
-		switch ( inst.op )
-		{
-			case NOP:
-				cout << "	fde - NOP" << endl;
-				break;
-			case ADD:
-				cout << "	fde - ADD r" << inst.dest << " r" << inst.a1 << " r" << inst.a2 << endl;
-				rf->r[ inst.dest ] = rf->r[ inst.a1 ] + rf->r[ inst.a2 ];
-				break;
-			case ADDI:
-				cout << "	fde - ADDI r" << inst.dest << " r" << inst.a1 << " " << inst.a2 << endl;
-				rf->r[ inst.dest ] = rf->r[ inst.a1 ] + inst.a2;
-				break;
-			case SUB:
-				cout << "	fde - SUB r" << inst.dest << " r" << inst.a1 << " r" << inst.a2 << endl;
-				rf->r[ inst.dest ] = rf->r[ inst.a1 ] - rf->r[ inst.a2 ];
-				break;
-			case SUBI:
-				cout << "	fde - SUBI r" << inst.dest << " r" << inst.a1 << " " << inst.a2 << endl;
-				rf->r[ inst.dest ] = rf->r[ inst.a1 ] - inst.a2;
-				break;
-			case MUL:
-				cout << "	fde - MUL r" << inst.dest << " r" << inst.a1 << " r" << inst.a2 << endl;
-				rf->r[ inst.dest ] = rf->r[ inst.a1 ] * rf->r[ inst.a2 ];
-				break;
-			case DIV:
-				cout << "	fde - DIV r" << inst.dest << " r" << inst.a1 << " r" << inst.a2 << endl;
-				rf->r[ inst.dest ] = rf->r[ inst.a1 ] / rf->r[ inst.a2 ];
-				break;
-			case LDI:
-				cout << "	fde - LDI r" << inst.dest << " " << inst.a1 << endl;
-				rf->r[ inst.dest ] = inst.a1;
-				break;
-		}
-	}
-
-	void push ()
-	{
-		//cout << "	fde - buffer write" << endl;
-		//wb->buffer_write ( &inst );
-	}
-};
-
-class processor
-{
-public:
-	RAM *ram;
-	register_file rf;
-	//write_back wb;
-	fetch_decode_execute fde;
-	int cycles;
-	int num_lines;
-
-	processor ( int lines, RAM *rp )
-		:/* wb ( &rf )
-		,*/ ram ( rp )
-		, fde ( rp, &rf /*, &wb*/ )
-	{
-		cycles = 0;
-		num_lines = lines;
-	}
-
-	int tick ()
-	{
-		cout << "Tick:" << endl;
-		for ( int i = 0 ; i < NUM_ARCH_REG ; i++ )
-			cout << "r" << i << " - " << rf.r[ i ] << ", ";
-		cout << endl;
-		fde.execute();
-		//wb.write();
-
-		return 0;
-	}
-
-	int tock ()
-	{
-		cout << "Tock:" << endl;
-		//fde.push();
-		rf.pc++;
-		cycles++;
-
-		if ( rf.pc >= num_lines )
-			return 1;
-		else
-			return 0;
-	}
-};
+}
 
 int main ( int argc, char *argv[] )
 {
