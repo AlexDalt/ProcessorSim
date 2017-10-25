@@ -13,14 +13,13 @@ SUBI dest opp1 const	// *dest = *opp1 - const
 MUL dest opp1 opp2 		// *dest = *opp1 * *opp2
 DIV dest opp1 opp2 		// *dest = *opp1 / *opp2
 LDI dest const			// *dest = const
+BEQ opp1 opp2 offset	// if (value in register opp1) == (value in register opp2) *pc += offset
 NOP						// no opperation
-
 ```
 
 ### Not Implimented (yet)
 ```
-BEQ opp1 opp2 offset	// if (value in register opp1) == (value in register opp2) *pc += offset
-	// add more branch instructions?
+// add more branch instructions?
 J target				// *pc = target
 JR opp1					// *pc = *opp1
 LD dest addr			// load value from memory address addr into register dest

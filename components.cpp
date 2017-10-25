@@ -18,6 +18,8 @@ instruction::instruction ( string inst, string d, string b1, string b2 )
 		op = DIV;
 	else if ( inst.compare ( "LDI" ) == 0 )
 		op = LDI;
+	else if ( inst.compare ( "BEQ" ) == 0 )
+		op = BEQ;
 
 	try
 	{
@@ -114,6 +116,11 @@ void fetch_decode_execute::execute ()
 		case LDI:
 			cout << "	fde - LDI r" << inst.dest << " " << inst.a1 << endl;
 			rf->r[ inst.dest ] = inst.a1;
+			break;
+		case BEQ:
+			cout << "	fde - BEQ r" << inst.dest << " r" << inst.a1 << " " << inst.a2 << endl;
+			if ( rf->r[ inst.dest ] == rf->r[ inst.a1 ] )
+				rf->pc += inst.a2;
 			break;
 	}
 }
