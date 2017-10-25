@@ -24,10 +24,10 @@ instruction::instruction ( string inst, string d, string b1, string b2 )
 		op = BLEQ;
 	else if ( inst.compare ( "B" ) == 0 )
 		op = B;
-	else if ( inst.compare ( "JR" ) == 0 )
-		op = JR;
 	else if ( inst.compare ( "ST" ) == 0 )
 		op = ST;
+	else if ( inst.compare ( "STI" ) == 0 )
+		op = STI;
 
 	try
 	{
@@ -95,55 +95,55 @@ int fetch_decode_execute::execute ()
 	switch ( inst.op )
 	{
 		case NOP:
-			cout << "	fde - NOP" << endl;
+			cout << "	fde - " << rf->pc << ": NOP" << endl;
 			break;
 		case ADD:
-			cout << "	fde - ADD r" << inst.dest << " r" << inst.a1 << " r" << inst.a2 << endl;
+			cout << "	fde - " << rf->pc << ": ADD r" << inst.dest << " r" << inst.a1 << " r" << inst.a2 << endl;
 			rf->r[ inst.dest ] = rf->r[ inst.a1 ] + rf->r[ inst.a2 ];
 			break;
 		case ADDI:
-			cout << "	fde - ADDI r" << inst.dest << " r" << inst.a1 << " " << inst.a2 << endl;
+			cout << "	fde - " << rf->pc << ": ADDI r" << inst.dest << " r" << inst.a1 << " " << inst.a2 << endl;
 			rf->r[ inst.dest ] = rf->r[ inst.a1 ] + inst.a2;
 			break;
 		case SUB:
-			cout << "	fde - SUB r" << inst.dest << " r" << inst.a1 << " r" << inst.a2 << endl;
+			cout << "	fde - " << rf->pc << ": SUB r" << inst.dest << " r" << inst.a1 << " r" << inst.a2 << endl;
 			rf->r[ inst.dest ] = rf->r[ inst.a1 ] - rf->r[ inst.a2 ];
 			break;
 		case SUBI:
-			cout << "	fde - SUBI r" << inst.dest << " r" << inst.a1 << " " << inst.a2 << endl;
+			cout << "	fde - " << rf->pc << ": SUBI r" << inst.dest << " r" << inst.a1 << " " << inst.a2 << endl;
 			rf->r[ inst.dest ] = rf->r[ inst.a1 ] - inst.a2;
 			break;
 		case MUL:
-			cout << "	fde - MUL r" << inst.dest << " r" << inst.a1 << " r" << inst.a2 << endl;
+			cout << "	fde - " << rf->pc << ": MUL r" << inst.dest << " r" << inst.a1 << " r" << inst.a2 << endl;
 			rf->r[ inst.dest ] = rf->r[ inst.a1 ] * rf->r[ inst.a2 ];
 			break;
 		case DIV:
-			cout << "	fde - DIV r" << inst.dest << " r" << inst.a1 << " r" << inst.a2 << endl;
+			cout << "	fde - " << rf->pc << ": DIV r" << inst.dest << " r" << inst.a1 << " r" << inst.a2 << endl;
 			rf->r[ inst.dest ] = rf->r[ inst.a1 ] / rf->r[ inst.a2 ];
 			break;
 		case LD:
-			cout << "	fde - LD r" << inst.dest << " " << inst.a1 << endl;
-			rf->r[ inst.dest ] = ram->data[ inst.a1 ];
+			cout << "	fde - " << rf->pc << ": LD r" << inst.dest << " r" << inst.a1 << endl;
+			rf->r[ inst.dest ] = ram->data[ rf->r[ inst.a1 ] ];
 			break;
 		case LDI:
-			cout << "	fde - LDI r" << inst.dest << " " << inst.a1 << endl;
+			cout << "	fde - " << rf->pc << ": LDI r" << inst.dest << " " << inst.a1 << endl;
 			rf->r[ inst.dest ] = inst.a1;
 			break;
 		case BLEQ:
-			cout << "	fde - BLEQ r" << inst.dest << " r" << inst.a1 << " " << inst.a2 << endl;
+			cout << "	fde - " << rf->pc << ": BLEQ r" << inst.dest << " r" << inst.a1 << " " << inst.a2 << endl;
 			if ( rf->r[ inst.dest ] <= rf->r[ inst.a1 ] )
-				rf->pc += inst.a2;
+				rf->pc += inst.a2 - 1;
 			break;
 		case B:
-			cout << "	fde - B " << inst.dest << endl;
-			rf->pc = inst.dest;
-			break;
-		case JR:
-			cout << "	fde - JR " << inst.dest << endl;
-			rf->pc += (inst.dest - 1);
+			cout << "	fde - " << rf->pc << ": B " << inst.dest << endl;
+			rf->pc += inst.dest - 1;
 			break;
 		case ST:
-			cout << "	fde - ST r" << inst.dest << " " << inst.a1 << endl;
+			cout << "	fde - " << rf->pc << ": ST r" << inst.dest << " r" << inst.a1 << endl;
+			ram->data[ rf->r[ inst.a1 ] ] = rf->r[ inst.dest ];
+			break;
+		case STI:
+			cout << "	fde - " << rf->pc << ": STI r" << inst.dest << " " << inst.a1 << endl;
 			ram->data[ inst.a1 ] = rf->r[ inst.dest ];
 			break;
 	}
@@ -170,14 +170,15 @@ processor::processor ( int code, int data, RAM *rp )
 int processor::tick ()
 {
 	cout << "Tick:" << endl;
+	completed_instructions += fde.execute();
+	//wb.write();
 	for ( int i = 0 ; i < NUM_ARCH_REG ; i++ )
 		cout << "r" << i << " - " << rf.r[ i ] << ", ";
 	cout << endl;
 	for ( int j = 0 ; j < num_data ; j++)
 		cout << "[" << j << "] " << ram->data[j] << ", ";
 	cout << endl;
-	completed_instructions += fde.execute();
-	//wb.write();
+
 
 	return 0;
 }

@@ -10,18 +10,18 @@ SUB dest opp1 opp2 	// *dest = *opp1 - *opp2
 SUBI dest opp1 const	// *dest = *opp1 - const
 MUL dest opp1 opp2 	// *dest = *opp1 * *opp2
 DIV dest opp1 opp2 	// *dest = *opp1 / *opp2
-LD dest addr		// load value from memory address addr into register dest
+LD dest addr		// load value from memory address in reg addr into register dest
 LDI dest const		// *dest = const
-BLEQ opp1 opp2 offset	// if (value in register opp1) == (value in register opp2) *pc += offset
-B target		// *pc = target
-JR target		// *pc += target
-ST opp1 addr		// store value in register opp1 into memory address addr
+BLEQ opp1 opp2 target	// if (value in register opp1) <= (value in register opp2) *pc += offset
+B offset 		// *pc += target
+ST opp1 opp2 		// store value in register opp1 into memory address in reg opp2
+STI opp1 addr		// store value in register opp1 into memory address addr
 NOP			// no opperation
 ```
 
 ## TODO
+* Fix large memory
 * Write benchmark programs
-	* Vector addition
 	* Standard kernels (eg. "Livermore Loops")
 	* Sorting algorithms (eg. bubble sort + quick sort)
 	* Numerical algorithms (eg. GCD or Hamming weight)
