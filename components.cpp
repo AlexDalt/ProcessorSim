@@ -20,10 +20,10 @@ instruction::instruction ( string inst, string d, string b1, string b2 )
 		op = LD;
 	else if ( inst.compare ( "LDI" ) == 0 )
 		op = LDI;
-	else if ( inst.compare ( "BEQ" ) == 0 )
-		op = BEQ;
-	else if ( inst.compare ( "J" ) == 0 )
-		op = J;
+	else if ( inst.compare ( "BLEQ" ) == 0 )
+		op = BLEQ;
+	else if ( inst.compare ( "B" ) == 0 )
+		op = B;
 	else if ( inst.compare ( "JR" ) == 0 )
 		op = JR;
 	else if ( inst.compare ( "ST" ) == 0 )
@@ -129,13 +129,13 @@ int fetch_decode_execute::execute ()
 			cout << "	fde - LDI r" << inst.dest << " " << inst.a1 << endl;
 			rf->r[ inst.dest ] = inst.a1;
 			break;
-		case BEQ:
-			cout << "	fde - BEQ r" << inst.dest << " r" << inst.a1 << " " << inst.a2 << endl;
-			if ( rf->r[ inst.dest ] == rf->r[ inst.a1 ] )
+		case BLEQ:
+			cout << "	fde - BLEQ r" << inst.dest << " r" << inst.a1 << " " << inst.a2 << endl;
+			if ( rf->r[ inst.dest ] <= rf->r[ inst.a1 ] )
 				rf->pc += inst.a2;
 			break;
-		case J:
-			cout << "	fde - J " << inst.dest << endl;
+		case B:
+			cout << "	fde - B " << inst.dest << endl;
 			rf->pc = inst.dest;
 			break;
 		case JR:
