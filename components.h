@@ -85,7 +85,7 @@ public:
 	instruction inst;
 
 	fetch_decode_execute ( RAM *rp, register_file *rf_in/*, write_back *out */);
-	void execute ();
+	int execute ();
 	void push ();
 };
 
@@ -97,6 +97,7 @@ public:
 	//write_back wb;
 	fetch_decode_execute fde;
 	int cycles;
+	int completed_instructions;
 	int num_code;
 	int num_data;
 

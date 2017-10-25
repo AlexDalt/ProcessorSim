@@ -89,7 +89,7 @@ fetch_decode_execute::fetch_decode_execute ( RAM *rp, register_file *rf_in/*, wr
 	//wb = out;
 }
 
-void fetch_decode_execute::execute ()
+int fetch_decode_execute::execute ()
 {
 	inst = ram->code[rf->pc];
 	switch ( inst.op )
@@ -147,6 +147,7 @@ void fetch_decode_execute::execute ()
 			ram->data[ inst.a1 ] = rf->r[ inst.dest ];
 			break;
 	}
+	return 1; //number of instructions completed
 }
 
 void fetch_decode_execute::push ()
@@ -163,6 +164,7 @@ processor::processor ( int code, int data, RAM *rp )
 	cycles = 0;
 	num_code = code;
 	num_data = data;
+	completed_instructions = 0;
 }
 
 int processor::tick ()
@@ -172,9 +174,9 @@ int processor::tick ()
 		cout << "r" << i << " - " << rf.r[ i ] << ", ";
 	cout << endl;
 	for ( int j = 0 ; j < num_data ; j++)
-		cout << "[" << j << "] " << ram->data[j] << endl;
+		cout << "[" << j << "] " << ram->data[j] << ", ";
 	cout << endl;
-	fde.execute();
+	completed_instructions += fde.execute();
 	//wb.write();
 
 	return 0;
@@ -186,6 +188,8 @@ int processor::tock ()
 	//fde.push();
 	rf.pc++;
 	cycles++;
+
+	cout << "cycles: " << cycles << ", inst/cycle: " << completed_instructions/cycles << endl;
 
 	if ( rf.pc >= num_code )
 		return 1;
