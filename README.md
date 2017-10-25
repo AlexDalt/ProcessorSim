@@ -17,11 +17,6 @@ LDI dest const			// *dest = const
 BEQ opp1 opp2 offset	// if (value in register opp1) == (value in register opp2) *pc += offset
 J target				// *pc = target
 JR target				// *pc += target
-NOP						// no opperation
-```
-
-### Not Implimented (yet)
-```
-// add more branch instructions?
 ST opp1 addr			// store value in register opp1 into memory address addr
+NOP						// no opperation
 ```

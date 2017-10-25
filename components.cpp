@@ -26,6 +26,8 @@ instruction::instruction ( string inst, string d, string b1, string b2 )
 		op = J;
 	else if ( inst.compare ( "JR" ) == 0 )
 		op = JR;
+	else if ( inst.compare ( "ST" ) == 0 )
+		op = ST;
 
 	try
 	{
@@ -139,6 +141,10 @@ void fetch_decode_execute::execute ()
 		case JR:
 			cout << "	fde - JR " << inst.dest << endl;
 			rf->pc += (inst.dest - 1);
+			break;
+		case ST:
+			cout << "	fde - ST r" << inst.dest << " " << inst.a1 << endl;
+			ram->data[ inst.a1 ] = rf->r[ inst.dest ];
 			break;
 	}
 }

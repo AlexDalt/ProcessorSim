@@ -14,5 +14,6 @@ MUL 0 0 1
 DIV 0 0 1
 LDI 0 1
 LDI 1 1
-JR -2
+ST 0 1
+NOP
 NOP
