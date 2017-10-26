@@ -196,16 +196,35 @@ int fetch_decode_execute::execute ()
 				rf->dirty[ inst.dest ] = true;
 			}
 			break;
+
 		case DIV:
-			cout << "	fde - " << rf->pc << ": DIV r" << inst.dest << " r" << inst.a1 << " r" << inst.a2 << endl;
-			rf->r[ inst.dest ] = rf->r[ inst.a1 ] / rf->r[ inst.a2 ];
-			rf->dirty[ inst.dest ] = true;
+			if ( rf->dirty[ inst.a1 ] || rf->dirty[ inst.a2 ] )
+			{
+				halt = true;
+				cout << "fde - [blocking instructon]";
+			}
+			else
+			{
+				cout << "	fde - " << rf->pc << ": DIV r" << inst.dest << " r" << inst.a1 << " r" << inst.a2 << endl;
+				inst.a1 = rf->r[ inst.a1 ] / rf->r[ inst.a2 ];
+				rf->dirty[ inst.dest ] = true;
+			}
 			break;
+
 		case LD:
-			cout << "	fde - " << rf->pc << ": LD r" << inst.dest << " r" << inst.a1 << endl;
-			rf->r[ inst.dest ] = ram->data[ rf->r[ inst.a1 ] ];
-			rf->dirty[ inst.dest ] = true;
+			if ( rf->dirty[ inst.a1 ] )
+			{
+				halt = true;
+				cout << "fde - [blocking instructon]";
+			}
+			else
+			{
+				cout << "	fde - " << rf->pc << ": LD r" << inst.dest << " r" << inst.a1 << endl;
+				inst.a1 = ram->data[ rf->r[ inst.a1 ] ];
+				rf->dirty[ inst.dest ] = true;
+			}
 			break;
+
 		case LDI:
 			cout << "fde - [" << rf->pc << ": LDI r" << inst.dest << " " << inst.a1 << "]";
 			rf->dirty[ inst.dest ] = true;
