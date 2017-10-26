@@ -120,6 +120,7 @@ fetch_decode_execute::fetch_decode_execute ( RAM *rp, register_file *rf_in, writ
 int fetch_decode_execute::execute ()
 {
 	halt = false;
+	write = false;
 	inst = ram->code[rf->pc];
 	switch ( inst.op )
 	{
@@ -138,6 +139,7 @@ int fetch_decode_execute::execute ()
 				cout << "fde - [" << rf->pc << ": ADD r" << inst.dest << " r" << inst.a1 << " r" << inst.a2 << "]";
 				inst.a1 = rf->r[ inst.a1 ] + rf->r[ inst.a2 ];
 				rf->dirty[ inst.dest ] = true;
+				write = true;
 			}
 			break;
 
@@ -152,6 +154,7 @@ int fetch_decode_execute::execute ()
 				cout << "fde - [" << rf->pc << ": ADDI r" << inst.dest << " r" << inst.a1 << " " << inst.a2 << "]";
 				inst.a1 = rf->r[ inst.a1 ] + inst.a2;
 				rf->dirty[ inst.dest ] = true;
+				write = true;
 			}
 			break;
 
@@ -166,6 +169,7 @@ int fetch_decode_execute::execute ()
 				cout << "fde - [" << rf->pc << ": SUB r" << inst.dest << " r" << inst.a1 << " r" << inst.a2 << "]";
 				inst.a1 = rf->r[ inst.a1 ] - rf->r[ inst.a2 ];
 				rf->dirty[ inst.dest ] = true;
+				write = true;
 			}
 			break;
 
@@ -180,6 +184,7 @@ int fetch_decode_execute::execute ()
 				cout << "fde - [" << rf->pc << ": SUBI r" << inst.dest << " r" << inst.a1 << " " << inst.a2 << "]";
 				inst.a1 = rf->r[ inst.a1 ] - inst.a2;
 				rf->dirty[ inst.dest ] = true;
+				write = true;
 			}
 			break;
 
@@ -194,6 +199,7 @@ int fetch_decode_execute::execute ()
 				cout << "fde - [" << rf->pc << ": MUL r" << inst.dest << " r" << inst.a1 << " r" << inst.a2 << "]";
 				inst.a1 = rf->r[ inst.a1 ] * rf->r[ inst.a2 ];
 				rf->dirty[ inst.dest ] = true;
+				write = true;
 			}
 			break;
 
@@ -208,6 +214,7 @@ int fetch_decode_execute::execute ()
 				cout << "fde - " << rf->pc << ": DIV r" << inst.dest << " r" << inst.a1 << " r" << inst.a2 << "]";
 				inst.a1 = rf->r[ inst.a1 ] / rf->r[ inst.a2 ];
 				rf->dirty[ inst.dest ] = true;
+				write = true;
 			}
 			break;
 
@@ -222,29 +229,50 @@ int fetch_decode_execute::execute ()
 				cout << "fde - [" << rf->pc << ": LD r" << inst.dest << " r" << inst.a1 << "]";
 				inst.a1 = ram->data[ rf->r[ inst.a1 ] ];
 				rf->dirty[ inst.dest ] = true;
+				write = true;
 			}
 			break;
 
 		case LDI:
 			cout << "fde - [" << rf->pc << ": LDI r" << inst.dest << " " << inst.a1 << "]";
 			rf->dirty[ inst.dest ] = true;
+			write = true;
 			break;
 
 		case BLEQ:
-			cout << "	fde - " << rf->pc << ": BLEQ r" << inst.dest << " r" << inst.a1 << " " << inst.a2 << endl;
-			if ( rf->r[ inst.dest ] <= rf->r[ inst.a1 ] )
-				rf->pc += inst.a2 - 1;
+			if ( rf->dirty[ inst.dest ] || rf->dirty[ inst.a1 ] )
+			{
+				halt = true;
+				cout << "fde - [blocking instructon]";
+			}
+			else
+			{
+				cout << "fde - [" << rf->pc << ": BLEQ r" << inst.dest << " r" << inst.a1 << " " << inst.a2 << "]";
+				if ( rf->r[ inst.dest ] <= rf->r[ inst.a1 ] )
+					rf->pc += inst.a2 - 1;
+			}
 			break;
+
 		case B:
-			cout << "	fde - " << rf->pc << ": B " << inst.dest << endl;
+			cout << "fde - [" << rf->pc << ": B " << inst.dest << "]";
 			rf->pc += inst.dest - 1;
 			break;
+
 		case ST:
-			cout << "	fde - " << rf->pc << ": ST r" << inst.dest << " r" << inst.a1 << endl;
-			ram->data[ rf->r[ inst.a1 ] ] = rf->r[ inst.dest ];
+			if ( rf->dirty[ inst.a1 ] )
+			{
+				halt = true;
+				cout << "fde - [blocking instructon]";
+			}
+			else
+			{
+				cout << "fde - [" << rf->pc << ": ST r" << inst.dest << " r" << inst.a1 << "]";
+				ram->data[ rf->r[ inst.a1 ] ] = rf->r[ inst.dest ];
+			}
 			break;
+
 		case STI:
-			cout << "	fde - " << rf->pc << ": STI r" << inst.dest << " " << inst.a1 << endl;
+			cout << "fde - [" << rf->pc << ": STI r" << inst.dest << " " << inst.a1 << "]";
 			ram->data[ inst.a1 ] = rf->r[ inst.dest ];
 			break;
 	}
@@ -257,7 +285,7 @@ int fetch_decode_execute::execute ()
 
 void fetch_decode_execute::push ()
 {
-	if ( !halt )
+	if ( !halt && write )
 	{
 		cout << "fde - [buffer write]";
 		wb->buffer_write ( &inst );

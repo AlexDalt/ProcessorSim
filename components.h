@@ -61,7 +61,7 @@ public:
 	RAM *ram;
 	register_file *rf;
 	instruction inst;
-	bool halt;
+	bool halt, write;
 
 	fetch_decode_execute ( RAM *rp, register_file *rf_in, write_back *out );
 	int execute ();
