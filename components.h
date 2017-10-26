@@ -38,12 +38,10 @@ class register_file
 public:
 	int pc;
 	int r[NUM_ARCH_REG];
-	//int p[NUM_PHYS_REG];
+	bool dirty[NUM_ARCH_REG];
 
 	register_file();
 };
-
-/*
 
 class write_back
 {
@@ -51,40 +49,21 @@ public:
 	register_file *rf;
 	queue <instruction> buffer;
 
-	write_back ( register_file *reg_pointer )
-	{
-		rf = reg_pointer;
-	}
-
-	void buffer_write ( instruction *inst )
-	{
-		instruction i = *inst;
-		buffer.push ( i );
-	}
-
-	void write ()
-	{
-		if ( !buffer.empty() ){
-			instruction i = buffer.front();
-			buffer.pop();
-			cout << "	write - r" << i.dest << " " << i.a1 << endl;
-			rf->r[ i.dest ] = i.a1;
-		}
-		else
-			cout << "	write - buffer empty" << endl;
-	}
+	write_back ( register_file *reg_pointer );
+	void buffer_write ( instruction *inst );
+	void write ();
 };
 
-*/
 class fetch_decode_execute
 {
 public:
-	//write_back *wb;
+	write_back *wb;
 	RAM *ram;
 	register_file *rf;
 	instruction inst;
+	bool halt;
 
-	fetch_decode_execute ( RAM *rp, register_file *rf_in/*, write_back *out */);
+	fetch_decode_execute ( RAM *rp, register_file *rf_in, write_back *out );
 	int execute ();
 	void push ();
 };
@@ -94,7 +73,7 @@ class processor
 public:
 	RAM *ram;
 	register_file rf;
-	//write_back wb;
+	write_back wb;
 	fetch_decode_execute fde;
 	int cycles;
 	int completed_instructions;

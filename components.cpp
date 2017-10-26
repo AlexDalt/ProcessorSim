@@ -80,17 +80,46 @@ int RAM::add ( int index, int d )
 register_file::register_file()
 {
 	pc = 0;
+	for ( int i = 0; i < NUM_ARCH_REG ; i++ )
+	{
+		dirty[ i ] = false;
+	}
 }
 
-fetch_decode_execute::fetch_decode_execute ( RAM *rp, register_file *rf_in/*, write_back *out */)
+write_back::write_back ( register_file *reg_pointer )
+{
+	rf = reg_pointer;
+}
+
+void write_back::buffer_write ( instruction *inst )
+{
+	instruction i = *inst;
+	buffer.push ( i );
+}
+
+void write_back::write ()
+{
+	if ( !buffer.empty() ){
+		instruction i = buffer.front();
+		buffer.pop();
+		cout << "write - [r" << i.dest << " " << i.a1 << "]";
+		rf->r[ i.dest ] = i.a1;
+		rf->dirty[ i.dest ] = false;
+	}
+	else
+		cout << "write - [buffer empty]";
+}
+
+fetch_decode_execute::fetch_decode_execute ( RAM *rp, register_file *rf_in, write_back *out )
 {
 	ram = rp;
 	rf = rf_in;
-	//wb = out;
+	wb = out;
 }
 
 int fetch_decode_execute::execute ()
 {
+	halt = false;
 	inst = ram->code[rf->pc];
 	switch ( inst.op )
 	{
@@ -98,36 +127,51 @@ int fetch_decode_execute::execute ()
 			cout << "	fde - " << rf->pc << ": NOP" << endl;
 			break;
 		case ADD:
-			cout << "	fde - " << rf->pc << ": ADD r" << inst.dest << " r" << inst.a1 << " r" << inst.a2 << endl;
-			rf->r[ inst.dest ] = rf->r[ inst.a1 ] + rf->r[ inst.a2 ];
+			if ( rf->dirty[ inst.a1 ] || rf->dirty[ inst.a2 ] )
+			{
+				halt = true;
+				cout << "fde - [blocking instrucion]";
+			}
+			else
+			{
+				cout << "fde - [" << rf->pc << ": ADD r" << inst.dest << " r" << inst.a1 << " r" << inst.a2 << "]";
+				inst.a1 = rf->r[ inst.a1 ] + rf->r[ inst.a2 ];
+				rf->dirty[ inst.dest ] = true;
+			}
 			break;
 		case ADDI:
 			cout << "	fde - " << rf->pc << ": ADDI r" << inst.dest << " r" << inst.a1 << " " << inst.a2 << endl;
 			rf->r[ inst.dest ] = rf->r[ inst.a1 ] + inst.a2;
+			rf->dirty[ inst.dest ] = true;
 			break;
 		case SUB:
 			cout << "	fde - " << rf->pc << ": SUB r" << inst.dest << " r" << inst.a1 << " r" << inst.a2 << endl;
 			rf->r[ inst.dest ] = rf->r[ inst.a1 ] - rf->r[ inst.a2 ];
+			rf->dirty[ inst.dest ] = true;
 			break;
 		case SUBI:
 			cout << "	fde - " << rf->pc << ": SUBI r" << inst.dest << " r" << inst.a1 << " " << inst.a2 << endl;
 			rf->r[ inst.dest ] = rf->r[ inst.a1 ] - inst.a2;
+			rf->dirty[ inst.dest ] = true;
 			break;
 		case MUL:
 			cout << "	fde - " << rf->pc << ": MUL r" << inst.dest << " r" << inst.a1 << " r" << inst.a2 << endl;
 			rf->r[ inst.dest ] = rf->r[ inst.a1 ] * rf->r[ inst.a2 ];
+			rf->dirty[ inst.dest ] = true;
 			break;
 		case DIV:
 			cout << "	fde - " << rf->pc << ": DIV r" << inst.dest << " r" << inst.a1 << " r" << inst.a2 << endl;
 			rf->r[ inst.dest ] = rf->r[ inst.a1 ] / rf->r[ inst.a2 ];
+			rf->dirty[ inst.dest ] = true;
 			break;
 		case LD:
 			cout << "	fde - " << rf->pc << ": LD r" << inst.dest << " r" << inst.a1 << endl;
 			rf->r[ inst.dest ] = ram->data[ rf->r[ inst.a1 ] ];
+			rf->dirty[ inst.dest ] = true;
 			break;
 		case LDI:
-			cout << "	fde - " << rf->pc << ": LDI r" << inst.dest << " " << inst.a1 << endl;
-			rf->r[ inst.dest ] = inst.a1;
+			cout << "fde - [" << rf->pc << ": LDI r" << inst.dest << " " << inst.a1 << "]";
+			rf->dirty[ inst.dest ] = true;
 			break;
 		case BLEQ:
 			cout << "	fde - " << rf->pc << ": BLEQ r" << inst.dest << " r" << inst.a1 << " " << inst.a2 << endl;
@@ -147,19 +191,25 @@ int fetch_decode_execute::execute ()
 			ram->data[ inst.a1 ] = rf->r[ inst.dest ];
 			break;
 	}
+	if ( !halt )
+		rf->pc++;
+
 	return 1; //number of instructions completed
 }
 
 void fetch_decode_execute::push ()
 {
-	//cout << "	fde - buffer write" << endl;
-	//wb->buffer_write ( &inst );
+	if ( !halt )
+	{
+		cout << "fde - [buffer write]";
+		wb->buffer_write ( &inst );
+	}
 }
 
 processor::processor ( int code, int data, RAM *rp )
-	:/* wb ( &rf )
-	,*/ ram ( rp )
-	, fde ( rp, &rf /*, &wb*/ )
+	: ram ( rp )
+	, wb ( &rf )
+	, fde ( rp, &rf , &wb )
 {
 	cycles = 0;
 	num_code = code;
@@ -169,15 +219,17 @@ processor::processor ( int code, int data, RAM *rp )
 
 int processor::tick ()
 {
-	cout << "Tick:" << endl;
+	cout << "Tick: ";
 	completed_instructions += fde.execute();
-	//wb.write();
+	cout << " | ";
+	wb.write();
+	cout << endl << "registers [ ";
 	for ( int i = 0 ; i < NUM_ARCH_REG ; i++ )
-		cout << "r" << i << " - " << rf.r[ i ] << ", ";
-	cout << endl;
+		cout << rf.r[ i ] << " ";
+	cout << "]" << endl << "memory [ ";
 	for ( int j = 0 ; j < num_data ; j++)
-		cout << "[" << j << "] " << ram->data[j] << ", ";
-	cout << endl;
+		cout << ram->data[j] << " ";
+	cout << "]" << endl;
 
 
 	return 0;
@@ -185,9 +237,9 @@ int processor::tick ()
 
 int processor::tock ()
 {
-	cout << "Tock:" << endl;
-	//fde.push();
-	rf.pc++;
+	cout << "Tock: ";
+	fde.push();
+	cout << endl;
 	cycles++;
 
 	cout << "cycles: " << cycles << ", inst/cycle: " << completed_instructions/cycles << endl;

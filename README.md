@@ -30,9 +30,10 @@ NOP			// no opperation
 * Fetch/Decode/Execute pipeline stages
 * Branch prediction into the fetch unit
 * Multiple execute units (2xALU, 1xLSU, 1xBU) w/ blocking issue
-* Reservation stations
+* Reservation stationsj
 * Extend branch prediction mechanism
 * Reorder buffer
+* Avoid dependancies
 * Register renaming
 * Execution unit that supports vector instructions
 * Cache memory
