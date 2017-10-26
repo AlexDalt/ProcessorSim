@@ -205,7 +205,7 @@ int fetch_decode_execute::execute ()
 			}
 			else
 			{
-				cout << "	fde - " << rf->pc << ": DIV r" << inst.dest << " r" << inst.a1 << " r" << inst.a2 << endl;
+				cout << "fde - " << rf->pc << ": DIV r" << inst.dest << " r" << inst.a1 << " r" << inst.a2 << "]";
 				inst.a1 = rf->r[ inst.a1 ] / rf->r[ inst.a2 ];
 				rf->dirty[ inst.dest ] = true;
 			}
@@ -219,7 +219,7 @@ int fetch_decode_execute::execute ()
 			}
 			else
 			{
-				cout << "	fde - " << rf->pc << ": LD r" << inst.dest << " r" << inst.a1 << endl;
+				cout << "fde - [" << rf->pc << ": LD r" << inst.dest << " r" << inst.a1 << "]";
 				inst.a1 = ram->data[ rf->r[ inst.a1 ] ];
 				rf->dirty[ inst.dest ] = true;
 			}
