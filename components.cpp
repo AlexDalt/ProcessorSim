@@ -278,9 +278,12 @@ int fetch_decode_execute::execute ()
 	}
 
 	if ( !halt )
+	{
 		rf->pc++;
+		return 1;
+	}
 
-	return 1; //number of instructions completed
+	return 0;
 }
 
 void fetch_decode_execute::push ()
@@ -317,7 +320,6 @@ int processor::tick ()
 		cout << ram->data[j] << " ";
 	cout << "]" << endl;
 
-
 	return 0;
 }
 
@@ -327,8 +329,9 @@ int processor::tock ()
 	fde.push();
 	cout << endl;
 	cycles++;
+	float inst_per_cycle = (float) completed_instructions / (float) cycles;
 
-	cout << "cycles: " << cycles << ", inst/cycle: " << completed_instructions/cycles << endl;
+	cout << "cycles: " << cycles << ", inst/cycle: " << inst_per_cycle << endl;
 
 	if ( rf.pc >= num_code )
 		return 1;
