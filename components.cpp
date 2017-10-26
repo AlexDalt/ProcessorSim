@@ -124,8 +124,9 @@ int fetch_decode_execute::execute ()
 	switch ( inst.op )
 	{
 		case NOP:
-			cout << "	fde - " << rf->pc << ": NOP" << endl;
+			cout << "fde - [" << rf->pc << ": NOP]";
 			break;
+
 		case ADD:
 			if ( rf->dirty[ inst.a1 ] || rf->dirty[ inst.a2 ] )
 			{
@@ -139,20 +140,47 @@ int fetch_decode_execute::execute ()
 				rf->dirty[ inst.dest ] = true;
 			}
 			break;
+
 		case ADDI:
-			cout << "	fde - " << rf->pc << ": ADDI r" << inst.dest << " r" << inst.a1 << " " << inst.a2 << endl;
-			rf->r[ inst.dest ] = rf->r[ inst.a1 ] + inst.a2;
-			rf->dirty[ inst.dest ] = true;
+			if ( rf->dirty[ inst.a1 ] )
+			{
+				halt = true;
+				cout << "fde - [blocking instrucion]";
+			}
+			else
+			{
+				cout << "fde - [" << rf->pc << ": ADDI r" << inst.dest << " r" << inst.a1 << " " << inst.a2 << "]";
+				inst.a1 = rf->r[ inst.a1 ] + inst.a2;
+				rf->dirty[ inst.dest ] = true;
+			}
 			break;
+
 		case SUB:
-			cout << "	fde - " << rf->pc << ": SUB r" << inst.dest << " r" << inst.a1 << " r" << inst.a2 << endl;
-			rf->r[ inst.dest ] = rf->r[ inst.a1 ] - rf->r[ inst.a2 ];
-			rf->dirty[ inst.dest ] = true;
+			if ( rf->dirty[ inst.a1 ] || rf->dirty[ inst.a2 ] )
+			{
+				halt = true;
+				cout << "fde - [blocking instructon]";
+			}
+			else
+			{
+				cout << "fde - [" << rf->pc << ": SUB r" << inst.dest << " r" << inst.a1 << " r" << inst.a2 << "]";
+				inst.a1 = rf->r[ inst.a1 ] - rf->r[ inst.a2 ];
+				rf->dirty[ inst.dest ] = true;
+			}
 			break;
+
 		case SUBI:
-			cout << "	fde - " << rf->pc << ": SUBI r" << inst.dest << " r" << inst.a1 << " " << inst.a2 << endl;
-			rf->r[ inst.dest ] = rf->r[ inst.a1 ] - inst.a2;
-			rf->dirty[ inst.dest ] = true;
+			if ( rf->dirty[ inst.a1 ] )
+			{
+				halt = true;
+				cout << "fde - [blocking instructon]";
+			}
+			else
+			{
+				cout << "fde - [" << rf->pc << ": SUBI r" << inst.dest << " r" << inst.a1 << " " << inst.a2 << "]";
+				inst.a1 = rf->r[ inst.a1 ] - inst.a2;
+				rf->dirty[ inst.dest ] = true;
+			}
 			break;
 		case MUL:
 			cout << "	fde - " << rf->pc << ": MUL r" << inst.dest << " r" << inst.a1 << " r" << inst.a2 << endl;
@@ -191,6 +219,7 @@ int fetch_decode_execute::execute ()
 			ram->data[ inst.a1 ] = rf->r[ inst.dest ];
 			break;
 	}
+
 	if ( !halt )
 		rf->pc++;
 
