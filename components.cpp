@@ -182,10 +182,19 @@ int fetch_decode_execute::execute ()
 				rf->dirty[ inst.dest ] = true;
 			}
 			break;
+
 		case MUL:
-			cout << "	fde - " << rf->pc << ": MUL r" << inst.dest << " r" << inst.a1 << " r" << inst.a2 << endl;
-			rf->r[ inst.dest ] = rf->r[ inst.a1 ] * rf->r[ inst.a2 ];
-			rf->dirty[ inst.dest ] = true;
+			if ( rf->dirty[ inst.a1 ] || rf->dirty[ inst.a2 ] )
+			{
+				halt = true;
+				cout << "fde - [blocking instructon]";
+			}
+			else
+			{
+				cout << "fde - [" << rf->pc << ": MUL r" << inst.dest << " r" << inst.a1 << " r" << inst.a2 << "]";
+				inst.a1 = rf->r[ inst.a1 ] * rf->r[ inst.a2 ];
+				rf->dirty[ inst.dest ] = true;
+			}
 			break;
 		case DIV:
 			cout << "	fde - " << rf->pc << ": DIV r" << inst.dest << " r" << inst.a1 << " r" << inst.a2 << endl;
