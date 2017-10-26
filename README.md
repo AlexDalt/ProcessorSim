@@ -26,7 +26,6 @@ NOP			// no opperation
 	* Numerical algorithms (eg. GCD or Hamming weight)
 	* Recursive algorithms (eg. Factorial)
 * Write assembler to read benchmark programs and convert them into machine readable
-* Write-back pipeline stage
 * Fetch/Decode/Execute pipeline stages
 * Branch prediction into the fetch unit
 * Multiple execute units (2xALU, 1xLSU, 1xBU) w/ blocking issue
