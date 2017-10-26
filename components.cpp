@@ -229,6 +229,7 @@ int fetch_decode_execute::execute ()
 			cout << "fde - [" << rf->pc << ": LDI r" << inst.dest << " " << inst.a1 << "]";
 			rf->dirty[ inst.dest ] = true;
 			break;
+
 		case BLEQ:
 			cout << "	fde - " << rf->pc << ": BLEQ r" << inst.dest << " r" << inst.a1 << " " << inst.a2 << endl;
 			if ( rf->r[ inst.dest ] <= rf->r[ inst.a1 ] )
