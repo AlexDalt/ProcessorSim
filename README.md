@@ -30,7 +30,8 @@ NOP			// no opperation
 * GUI
 * Branch prediction into the fetch unit
 * Multiple execute units (2xALU, 1xLSU, 1xBU) w/ blocking issue
-* Reservation stationsj
+* Sub pipelining
+* Reservation stations
 * Extend branch prediction mechanism
 * Reorder buffer
 * Avoid dependancies

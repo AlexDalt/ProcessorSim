@@ -50,22 +50,42 @@ public:
 	queue <instruction> buffer;
 
 	write_back ( register_file *reg_pointer );
-	void buffer_write ( instruction *inst );
+	void buffer_write ( instruction inst );
 	void write ();
+	void flush ();
 };
 
-class fetch_decode_execute
+class processor;
+
+class execute
 {
 public:
-	write_back *wb;
+	instruction inst1, inst2;
+	bool halt, write;
+	processor *proc;
 	RAM *ram;
 	register_file *rf;
-	instruction inst;
-	bool halt, write;
+	write_back *wb;
 
-	fetch_decode_execute ( RAM *rp, register_file *rf_in, write_back *out );
-	int execute ();
+	execute ( processor* proc_in, RAM *rp, register_file *rf_in, write_back *out );
+	int exec ();
 	void push ();
+	void buffer_exec ( instruction i );
+};
+
+class fetch_decode
+{
+public:
+	instruction inst;
+	RAM *ram;
+	execute *exec;
+	register_file *rf;
+	bool halt;
+
+	fetch_decode ( RAM *rp, register_file *rf_in, execute *e_in );
+	void fetch_instruction ();
+	void push ();
+	void flush ();
 };
 
 class processor
@@ -74,13 +94,15 @@ public:
 	RAM *ram;
 	register_file rf;
 	write_back wb;
-	fetch_decode_execute fde;
+	execute exec;
+	fetch_decode fd;
 	int cycles;
 	int completed_instructions;
 	int num_code;
 	int num_data;
 
 	processor ( int code, int data, RAM *rp );
+	void flush ();
 	int tick ();
 	int tock ();
 };
