@@ -34,4 +34,5 @@
 tags
 *.swp
 processor
-*.txt # Coursework submission instructions
+# Coursework submission instructions
+readme.txt
