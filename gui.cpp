@@ -5,6 +5,7 @@ processor* proc;
 
 void init_ncurses( RAM* ram_in, processor* proc_in )
 {
+	initscr();
 	raw(); 		// turns off line buffering
 	noecho(); 	// doesn't echo input to stdout
 	getmaxyx( stdscr, row, col );
