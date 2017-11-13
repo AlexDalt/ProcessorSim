@@ -1,4 +1,4 @@
-#include "components.h"
+#include "gui.h"
 
 int main ( int argc, char *argv[] )
 {
@@ -90,6 +90,8 @@ int main ( int argc, char *argv[] )
 	int finished = 0;
 	bool run = false;
 
+	init_ncurses( &ram, &p );
+
 	while ( (run || a != 'x') && !finished )
 	{
 		if ( a == 'r' )
@@ -108,6 +110,8 @@ int main ( int argc, char *argv[] )
 		if ( !run )
 			a = getchar();
 	}
+
+	tidy_up_ncurses();
 
 	return 0;
 }
