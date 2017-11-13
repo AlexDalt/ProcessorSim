@@ -102,12 +102,12 @@ void write_back::write ()
 	if ( !buffer.empty() ){
 		instruction i = buffer.front();
 		buffer.pop();
-		cout << "write - [r" << i.dest << " " << i.a1 << "]";
+		//cout << "write - [r" << i.dest << " " << i.a1 << "]";
 		rf->r[ i.dest ] = i.a1;
 		rf->dirty[ i.dest ] = false;
 	}
-	else
-		cout << "write - [buffer empty]";
+	//else
+		//cout << "write - [buffer empty]";
 }
 
 void write_back::flush ()
@@ -132,48 +132,48 @@ int execute::exec ()
 		switch ( inst2.op )
 		{
 			case NOP:
-				cout << "execute - [NOP]";
+				//cout << "execute - [NOP]";
 				break;
 
 			case ADD:
 			case ADDI:
-				cout << "execute - [ADD r" << inst2.dest << " " << inst2.a1 << " " << inst2.a2 << "]";
+				//cout << "execute - [ADD r" << inst2.dest << " " << inst2.a1 << " " << inst2.a2 << "]";
 				inst2.a1 = inst2.a1 + inst2.a2;
 				write = true;
 				break;
 
 			case SUB:
 			case SUBI:
-				cout << "execute - [SUB r" << inst2.dest << " " << inst2.a1 << " " << inst2.a2 << "]";
+				//cout << "execute - [SUB r" << inst2.dest << " " << inst2.a1 << " " << inst2.a2 << "]";
 				inst2.a1 = inst2.a1 - inst2.a2;
 				write = true;
 				break;
 
 			case MUL:
-				cout << "execute - [MUL r" << inst2.dest << " " << inst2.a1 << " " << inst2.a2 << "]";
+				//cout << "execute - [MUL r" << inst2.dest << " " << inst2.a1 << " " << inst2.a2 << "]";
 				inst2.a1 = inst2.a1 * inst2.a2;
 				write = true;
 				break;
 
 			case DIV:
-				cout << "execute - [DIV r" << inst2.dest << " " << inst2.a1 << " " << inst2.a2 << "]";
+				//cout << "execute - [DIV r" << inst2.dest << " " << inst2.a1 << " " << inst2.a2 << "]";
 				inst2.a1 = inst2.a1 / inst2.a2;
 				write = true;
 				break;
 
 			case LD:
-				cout << "execute - [LD r" << inst2.dest << " " << inst2.a1 << "]";
+				//cout << "execute - [LD r" << inst2.dest << " " << inst2.a1 << "]";
 				inst2.a1 = ram->data[ inst2.a1 ];
 				write = true;
 				break;
 
 			case LDI:
-				cout << "execute - [LDI r" << inst2.dest << " " << inst2.a1 << "]";
+				//cout << "execute - [LDI r" << inst2.dest << " " << inst2.a1 << "]";
 				write = true;
 				break;
 
 			case BLEQ:
-				cout << "execute - [BLEQ r" << inst2.dest << " r" << inst2.a1 << " " << inst2.a2 << "]";
+				//cout << "execute - [BLEQ r" << inst2.dest << " r" << inst2.a1 << " " << inst2.a2 << "]";
 				if ( inst2.dest <= inst2.a1 )
 				{
 					rf->pc += inst2.a2 - 1;
@@ -182,13 +182,13 @@ int execute::exec ()
 				break;
 
 			case B:
-				cout << "execute - [B " << inst2.dest << "]";
+				//cout << "execute - [B " << inst2.dest << "]";
 				rf->pc += inst2.dest - 2;
 				break;
 
 			case ST:
 			case STI:
-				cout << "execute - [ST r" << inst2.dest << " " << inst2.a1 << "]";
+				//cout << "execute - [ST r" << inst2.dest << " " << inst2.a1 << "]";
 				ram->data[ inst2.a1 ] = inst2.dest;
 				break;
 		}
@@ -198,7 +198,7 @@ int execute::exec ()
 	}
 	else
 	{
-		cout << "execute - [buffer empty]";
+		//cout << "execute - [buffer empty]";
 		return 0;
 	}
 }
@@ -207,13 +207,13 @@ void execute::push ()
 {
 	if ( write )
 	{
-		cout << "execute - [buffer write]";
+		//cout << "execute - [buffer write]";
 		wb->buffer_write ( inst2 );
 		write = false;
 	}
 	else
 	{
-		cout << "execute - [nothing to write to write_back buffer]";
+		//cout << "execute - [nothing to write to write_back buffer]";
 	}
 }
 
@@ -237,18 +237,18 @@ void fetch_decode::fetch_instruction ()
 	switch ( inst.op )
 	{
 		case NOP:
-			cout << "fd - [" << rf->pc << ": NOP]";
+			//cout << "fd - [" << rf->pc << ": NOP]";
 			break;
 
 		case ADD:
 			if ( rf->dirty[ inst.a1 ] || rf->dirty[ inst.a2 ] )
 			{
 				halt = true;
-				cout << "fd - [blocking instrucion]";
+				//cout << "fd - [blocking instrucion]";
 			}
 			else
 			{
-				cout << "fd - [" << rf->pc << ": ADD r" << inst.dest << " r" << inst.a1 << " r" << inst.a2 << "]";
+				//cout << "fd - [" << rf->pc << ": ADD r" << inst.dest << " r" << inst.a1 << " r" << inst.a2 << "]";
 				inst.a1 = rf->r[ inst.a1 ];
 				inst.a2 = rf->r[ inst.a2 ];
 				rf->dirty[ inst.dest ] = true;
@@ -259,11 +259,11 @@ void fetch_decode::fetch_instruction ()
 			if ( rf->dirty[ inst.a1 ] )
 			{
 				halt = true;
-				cout << "fd - [blocking instrucion]";
+				//cout << "fd - [blocking instrucion]";
 			}
 			else
 			{
-				cout << "fd - [" << rf->pc << ": ADDI r" << inst.dest << " r" << inst.a1 << " " << inst.a2 << "]";
+				//cout << "fd - [" << rf->pc << ": ADDI r" << inst.dest << " r" << inst.a1 << " " << inst.a2 << "]";
 				inst.a1 = rf->r[ inst.a1 ];
 				rf->dirty[ inst.dest ] = true;
 			}
@@ -273,11 +273,11 @@ void fetch_decode::fetch_instruction ()
 			if ( rf->dirty[ inst.a1 ] || rf->dirty[ inst.a2 ] )
 			{
 				halt = true;
-				cout << "fd - [blocking instructon]";
+				//cout << "fd - [blocking instructon]";
 			}
 			else
 			{
-				cout << "fd - [" << rf->pc << ": SUB r" << inst.dest << " r" << inst.a1 << " r" << inst.a2 << "]";
+				//cout << "fd - [" << rf->pc << ": SUB r" << inst.dest << " r" << inst.a1 << " r" << inst.a2 << "]";
 				inst.a1 = rf->r[ inst.a1 ];
 				inst.a2 = rf->r[ inst.a2 ];
 				rf->dirty[ inst.dest ] = true;
@@ -288,11 +288,11 @@ void fetch_decode::fetch_instruction ()
 			if ( rf->dirty[ inst.a1 ] )
 			{
 				halt = true;
-				cout << "fd	- [blocking instructon]";
+				//cout << "fd	- [blocking instructon]";
 			}
 			else
 			{
-				cout << "fd - [" << rf->pc << ": SUBI r" << inst.dest << " r" << inst.a1 << " " << inst.a2 << "]";
+				//cout << "fd - [" << rf->pc << ": SUBI r" << inst.dest << " r" << inst.a1 << " " << inst.a2 << "]";
 				inst.a1 = rf->r[ inst.a1 ];
 				rf->dirty[ inst.dest ] = true;
 			}
@@ -302,11 +302,11 @@ void fetch_decode::fetch_instruction ()
 			if ( rf->dirty[ inst.a1 ] || rf->dirty[ inst.a2 ] )
 			{
 				halt = true;
-				cout << "fd - [blocking instructon]";
+				//cout << "fd - [blocking instructon]";
 			}
 			else
 			{
-				cout << "fd - [" << rf->pc << ": MUL r" << inst.dest << " r" << inst.a1 << " r" << inst.a2 << "]";
+				//cout << "fd - [" << rf->pc << ": MUL r" << inst.dest << " r" << inst.a1 << " r" << inst.a2 << "]";
 				inst.a1 = rf->r[ inst.a1 ];
 				inst.a2 = rf->r[ inst.a2 ];
 				rf->dirty[ inst.dest ] = true;
@@ -317,11 +317,11 @@ void fetch_decode::fetch_instruction ()
 			if ( rf->dirty[ inst.a1 ] || rf->dirty[ inst.a2 ] )
 			{
 				halt = true;
-				cout << "fd - [blocking instructon]";
+				//cout << "fd - [blocking instructon]";
 			}
 			else
 			{
-				cout << "fd - " << rf->pc << ": DIV r" << inst.dest << " r" << inst.a1 << " r" << inst.a2 << "]";
+				//cout << "fd - " << rf->pc << ": DIV r" << inst.dest << " r" << inst.a1 << " r" << inst.a2 << "]";
 				inst.a1 = rf->r[ inst.a1 ];
 				inst.a2 = rf->r[ inst.a2 ];
 				rf->dirty[ inst.dest ] = true;
@@ -332,18 +332,18 @@ void fetch_decode::fetch_instruction ()
 			if ( rf->dirty[ inst.a1 ] )
 			{
 				halt = true;
-				cout << "fd - [blocking instructon]";
+				//cout << "fd - [blocking instructon]";
 			}
 			else
 			{
-				cout << "fd - [" << rf->pc << ": LD r" << inst.dest << " r" << inst.a1 << "]";
+				//cout << "fd - [" << rf->pc << ": LD r" << inst.dest << " r" << inst.a1 << "]";
 				inst.a1 = rf->r[ inst.a1 ];
 				rf->dirty[ inst.dest ] = true;
 			}
 			break;
 
 		case LDI:
-			cout << "fd - [" << rf->pc << ": LDI r" << inst.dest << " " << inst.a1 << "]";
+			//cout << "fd - [" << rf->pc << ": LDI r" << inst.dest << " " << inst.a1 << "]";
 			rf->dirty[ inst.dest ] = true;
 			break;
 
@@ -351,36 +351,36 @@ void fetch_decode::fetch_instruction ()
 			if ( rf->dirty[ inst.dest ] || rf->dirty[ inst.a1 ] )
 			{
 				halt = true;
-				cout << "fd - [blocking instructon]";
+				//cout << "fd - [blocking instructon]";
 			}
 			else
 			{
-				cout << "fd - [" << rf->pc << ": BLEQ r" << inst.dest << " r" << inst.a1 << " " << inst.a2 << "]";
+				//cout << "fd - [" << rf->pc << ": BLEQ r" << inst.dest << " r" << inst.a1 << " " << inst.a2 << "]";
 				inst.dest = rf->r[ inst.dest ];
 				inst.a1 = rf->r[ inst.a1 ];
 			}
 			break;
 
 		case B:
-			cout << "fd - [" << rf->pc << ": B " << inst.dest << "]";
+			//cout << "fd - [" << rf->pc << ": B " << inst.dest << "]";
 			break;
 
 		case ST:
 			if ( rf->dirty[ inst.a1 ] )
 			{
 				halt = true;
-				cout << "fd - [blocking instructon]";
+				//cout << "fd - [blocking instructon]";
 			}
 			else
 			{
-				cout << "fd - [" << rf->pc << ": ST r" << inst.dest << " r" << inst.a1 << "]";
+				//cout << "fd - [" << rf->pc << ": ST r" << inst.dest << " r" << inst.a1 << "]";
 				inst.dest = rf->r[ inst.dest ];
 				inst.a1 = rf->r[ inst.a1 ];
 			}
 			break;
 
 		case STI:
-			cout << "fd - [" << rf->pc << ": STI r" << inst.dest << " " << inst.a1 << "]";
+			//cout << "fd - [" << rf->pc << ": STI r" << inst.dest << " " << inst.a1 << "]";
 			inst.dest = rf->r[ inst.dest ];
 			break;
 	}
@@ -392,11 +392,11 @@ void fetch_decode::push ()
 	{
 		exec->buffer_exec( inst );
 		rf->pc++;
-		cout << "fd - [pushed to execute]";
+		//cout << "fd - [pushed to execute]";
 	}
 	else
 	{
-		cout << "fd - [nothing to push to execute]";
+		//cout << "fd - [nothing to push to execute]";
 	}
 }
 
@@ -425,34 +425,34 @@ void processor::flush ()
 
 int processor::tick ()
 {
-	cout << "Tick: ";
+	//cout << "Tick: ";
 	fd.fetch_instruction();
-	cout << " | ";
+	//cout << " | ";
 	completed_instructions += exec.exec();
-	cout << " | ";
+	//cout << " | ";
 	wb.write();
-	cout << endl << "registers [ ";
-	for ( int i = 0 ; i < NUM_ARCH_REG ; i++ )
-		cout << rf.r[ i ] << " ";
-	cout << "]" << endl << "memory [ ";
-	for ( int j = 0 ; j < num_data ; j++)
-		cout << ram->data[j] << " ";
-	cout << "]" << endl;
+	//cout << endl << "registers [ ";
+	//for ( int i = 0 ; i < NUM_ARCH_REG ; i++ )
+		//cout << rf.r[ i ] << " ";
+	//cout << "]" << endl << "memory [ ";
+	//for ( int j = 0 ; j < num_data ; j++)
+		//cout << ram->data[j] << " ";
+	//cout << "]" << endl;
 
 	return 0;
 }
 
 int processor::tock ()
 {
-	cout << "Tock: ";
+	//cout << "Tock: ";
 	fd.push();
-	cout << " | ";
+	//cout << " | ";
 	exec.push();
-	cout << endl;
+	//cout << endl;
 	cycles++;
 	float inst_per_cycle = (float) completed_instructions / (float) cycles;
 
-	cout << "cycles: " << cycles << ", inst/cycle: " << inst_per_cycle << endl;
+	//cout << "cycles: " << cycles << ", inst/cycle: " << inst_per_cycle << endl;
 
 	if ( rf.pc >= num_code + 1 )
 		return 1;

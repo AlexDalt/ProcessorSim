@@ -108,7 +108,7 @@ int main ( int argc, char *argv[] )
 		i++;
 
 		if ( !run )
-			a = getchar();
+			a = getch();
 	}
 
 	tidy_up_ncurses();
