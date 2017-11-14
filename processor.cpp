@@ -89,6 +89,7 @@ int main ( int argc, char *argv[] )
 	char a = getchar();
 	int finished = 0;
 	bool run = false;
+	int i = 0;
 
 	init_ncurses( &ram, &p );
 
@@ -97,14 +98,19 @@ int main ( int argc, char *argv[] )
 		if ( a == 'r' )
 			run = true;
 
-		p.tick();
+		if ( i % 2 == 0 )
+			p.tick();
+		else
+			finished = p.tock();
+
 		redraw();
-		finished = p.tock();
 
 		if ( !run )
 			a = getch();
 		else
 			usleep(20000);
+
+		i++;
 	}
 
 	tidy_up_ncurses();

@@ -194,7 +194,6 @@ int execute::exec ()
 				ram->data[ inst2.a1 ] = inst2.dest;
 				break;
 		}
-		halt = true;
 
 		return 1;
 	}
@@ -398,6 +397,7 @@ void fetch_decode::push ()
 	}
 	else
 	{
+		exec->halt = 1;
 		//cout << "fd - [nothing to push to execute]";
 	}
 }

@@ -182,12 +182,12 @@ void refresh_fd( WINDOW *win )
 void refresh_exec( WINDOW *win )
 {
 	int x, y, maxx, maxy;
-	instruction inst = proc->exec.inst2;
+	instruction inst = proc->exec.inst1;
 	getmaxyx( win, maxy, maxx );
 	werase( win );
 	x = (maxx-13)/2;
 	y = (maxy-2)/2;
-	//if( proc->exec.halt != 0 ){
+	if( proc->exec.halt == 0 ){
 		switch ( inst.op )
 		{
 			case NOP:
@@ -229,7 +229,7 @@ void refresh_exec( WINDOW *win )
 			case STI:
 				mvwprintw( win, y, (maxx - 8)/2, "STI r%d %d", inst.dest, inst.a1 );
 				break;
-	//	}
+		}
 	}
 	mvwprintw( win, maxy-2, (maxx - 6)/2, "halt=%d", proc->exec.halt );
 	box( win, 0, 0 );
