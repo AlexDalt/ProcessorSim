@@ -87,7 +87,6 @@ int main ( int argc, char *argv[] )
 	}
 
 	char a = getchar();
-	int i = 0;
 	int finished = 0;
 	bool run = false;
 
@@ -95,24 +94,17 @@ int main ( int argc, char *argv[] )
 
 	while ( (run || a != 'x') && !finished )
 	{
-		redraw();
 		if ( a == 'r' )
 			run = true;
 
-		if ( i % 2 == 0 )
-		{
-			p.tick();
-		}
-		else
-		{
-			finished = p.tock();
-		}
-		i++;
+		p.tick();
+		redraw();
+		finished = p.tock();
 
 		if ( !run )
 			a = getch();
 		else
-			usleep(10000);
+			usleep(20000);
 	}
 
 	tidy_up_ncurses();

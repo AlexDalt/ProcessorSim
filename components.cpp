@@ -96,14 +96,14 @@ write_back::write_back ( register_file *reg_pointer )
 void write_back::buffer_write ( instruction inst )
 {
 	instruction i = inst;
-	buffer.push ( i );
+	buffer.push_back ( i );
 }
 
 void write_back::write ()
 {
 	if ( !buffer.empty() ){
 		instruction i = buffer.front();
-		buffer.pop();
+		buffer.pop_front();
 		//cout << "write - [r" << i.dest << " " << i.a1 << "]";
 		rf->r[ i.dest ] = i.a1;
 		rf->dirty[ i.dest ] = false;

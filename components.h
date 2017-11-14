@@ -2,7 +2,7 @@
 #include <string>
 #include <iostream>
 #include <sstream>
-#include <queue>
+#include <deque>
 
 using namespace std;
 
@@ -49,7 +49,7 @@ class write_back
 {
 public:
 	register_file *rf;
-	queue <instruction> buffer;
+	deque <instruction> buffer;
 
 	write_back ( register_file *reg_pointer );
 	void buffer_write ( instruction inst );

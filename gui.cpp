@@ -2,7 +2,7 @@
 int row, col;
 RAM *ram;
 processor *proc;
-WINDOW *ram_win, *proc_win, *help_win, *data_win, *program_win, *rf_win;
+WINDOW *ram_win, *proc_win, *help_win, *data_win, *program_win, *rf_win, *fd_win, *exec_win, *wb_win;
 
 WINDOW *create_win( int height, int width, int starty, int startx )
 {
@@ -113,13 +113,186 @@ void refresh_reg_file( WINDOW *win )
 	int x, y;
 	getmaxyx( win, y, x );
 	werase( win );
-	mvwprintw( win, 1, 1, "pc - %d", proc->rf.pc );
+	mvwprintw( win, 1, 1, "pc - %3d", proc->rf.pc );
 	for( int i = 0; i < NUM_ARCH_REG; i++)
 	{
-		mvwprintw( win, i+2, 1, "r%d - %d", i, proc->rf.r[ i ] );
+		mvwprintw( win, i+2, 1, "r%d - %3d, d=%d", i, proc->rf.r[ i ], proc->rf.dirty[ i ] );
 	}
 	box( win, 0, 0 );
 	mvwprintw( win, 0, (x - 2)/2, "rf" );
+	wrefresh( win );
+}
+
+void refresh_fd( WINDOW *win )
+{
+	int x, y, maxx, maxy;
+	instruction inst = proc->fd.inst;
+	getmaxyx( win, maxy, maxx );
+	werase( win );
+	x = (maxx-15)/2;
+	y = (maxy-2)/2;
+	switch ( inst.op )
+	{
+		case NOP:
+			mvwprintw( win, y, (maxx-3)/2, "NOP");
+			break;
+		case ADD:
+			mvwprintw( win, y, x, "ADD r%d r%d r%d", inst.dest, inst.a1, inst.a2 );
+			break;
+		case ADDI:
+			mvwprintw( win, y, x, "ADDI r%d r%d %d", inst.dest, inst.a1, inst.a2 );
+			break;
+		case SUB:
+			mvwprintw( win, y, x, "SUB r%d r%d r%d", inst.dest, inst.a1, inst.a2);
+			break;
+		case SUBI:
+			mvwprintw( win, y, x, "SUBI r%d r%d %d", inst.dest, inst.a1, inst.a2);
+			break;
+		case MUL:
+			mvwprintw( win, y, x, "MUL r%d r%d r%d", inst.dest, inst.a1, inst.a2);
+			break;
+		case DIV:
+			mvwprintw( win, y, x, "DIV  r%d r%d r%d", inst.dest, inst.a1, inst.a2);
+			break;
+		case LD:
+			mvwprintw( win, y, (maxx - 8)/2, "LD r%d r%d", inst.dest, inst.a1 );
+			break;
+		case LDI:
+			mvwprintw( win, y, (maxx - 8)/2, "LDI r%d %d", inst.dest, inst.a1 );
+			break;
+		case BLEQ:
+			mvwprintw( win, y, x, "BLEQ r%d r%d %d", inst.dest, inst.a1, inst.a2);
+			break;
+		case B:
+			mvwprintw( win, y, (maxx - 3)/2, "B %d", inst.dest );
+			break;
+		case ST:
+			mvwprintw( win, y, (maxx - 8)/2, "ST r%d r%d", inst.dest, inst.a1 );
+			break;
+		case STI:
+			mvwprintw( win, y, (maxx - 8)/2, "STI r%d %d", inst.dest, inst.a1 );
+			break;
+	}
+	mvwprintw( win, maxy-2, (maxx - 6)/2, "halt=%d", proc->fd.halt );
+	box( win, 0, 0 );
+	mvwprintw( win, 0, (maxx - 12)/2, "fetch/decode");
+	wrefresh( win );
+}
+
+void refresh_exec( WINDOW *win )
+{
+	int x, y, maxx, maxy;
+	instruction inst = proc->exec.inst2;
+	getmaxyx( win, maxy, maxx );
+	werase( win );
+	x = (maxx-13)/2;
+	y = (maxy-2)/2;
+	//if( proc->exec.halt != 0 ){
+		switch ( inst.op )
+		{
+			case NOP:
+				mvwprintw( win, y, (maxx-3)/2, "NOP");
+				break;
+			case ADD:
+				mvwprintw( win, y, x, "ADD r%d %d %d", inst.dest, inst.a1, inst.a2 );
+				break;
+			case ADDI:
+				mvwprintw( win, y, x, "ADDI r%d %d %d", inst.dest, inst.a1, inst.a2 );
+				break;
+			case SUB:
+				mvwprintw( win, y, x, "SUB r%d %d %d", inst.dest, inst.a1, inst.a2);
+				break;
+			case SUBI:
+				mvwprintw( win, y, x, "SUBI r%d %d %d", inst.dest, inst.a1, inst.a2);
+				break;
+			case MUL:
+				mvwprintw( win, y, x, "MUL r%d %d %d", inst.dest, inst.a1, inst.a2);
+				break;
+			case DIV:
+				mvwprintw( win, y, x, "DIV  r%d %d %d", inst.dest, inst.a1, inst.a2);
+				break;
+			case LD:
+				mvwprintw( win, y, (maxx - 7)/2, "LD r%d %d", inst.dest, inst.a1 );
+				break;
+			case LDI:
+				mvwprintw( win, y, (maxx - 8)/2, "LDI r%d %d", inst.dest, inst.a1 );
+				break;
+			case BLEQ:
+				mvwprintw( win, y, x, "BLEQ %d %d %d", inst.dest, inst.a1, inst.a2);
+				break;
+			case B:
+				mvwprintw( win, y, (maxx - 3)/2, "B %d", inst.dest );
+				break;
+			case ST:
+				mvwprintw( win, y, (maxx - 7)/2, "ST r%d %d", inst.dest, inst.a1 );
+				break;
+			case STI:
+				mvwprintw( win, y, (maxx - 8)/2, "STI r%d %d", inst.dest, inst.a1 );
+				break;
+	//	}
+	}
+	mvwprintw( win, maxy-2, (maxx - 6)/2, "halt=%d", proc->exec.halt );
+	box( win, 0, 0 );
+	mvwprintw( win, 0, (maxx - 3)/2, "ALU" );
+	wrefresh( win );
+}
+
+void refresh_wb( WINDOW *win )
+{
+	int x, maxx, maxy;
+	getmaxyx( win, maxy, maxx );
+	werase( win );
+	x = (maxx-13)/2;
+
+	for( int i = 0; i < proc->wb.buffer.size(); i++ )
+	{
+		instruction inst = proc->wb.buffer[ i ];
+		switch ( inst.op )
+		{
+			case NOP:
+				mvwprintw( win, i+1, (maxx-3)/2, "NOP");
+				break;
+			case ADD:
+				mvwprintw( win, i+1, x, "ADD r%d %d %d", inst.dest, inst.a1, inst.a2 );
+				break;
+			case ADDI:
+				mvwprintw( win, i+1, x, "ADDI r%d %d %d", inst.dest, inst.a1, inst.a2 );
+				break;
+			case SUB:
+				mvwprintw( win, i+1, x, "SUB r%d %d %d", inst.dest, inst.a1, inst.a2);
+				break;
+			case SUBI:
+				mvwprintw( win, i+1, x, "SUBI r%d %d %d", inst.dest, inst.a1, inst.a2);
+				break;
+			case MUL:
+				mvwprintw( win, i+1, x, "MUL r%d %d %d", inst.dest, inst.a1, inst.a2);
+				break;
+			case DIV:
+				mvwprintw( win, i+1, x, "DIV  r%d %d %d", inst.dest, inst.a1, inst.a2);
+				break;
+			case LD:
+				mvwprintw( win, i+1, (maxx - 7)/2, "LD r%d %d", inst.dest, inst.a1 );
+				break;
+			case LDI:
+				mvwprintw( win, i+1, (maxx - 8)/2, "LDI r%d %d", inst.dest, inst.a1 );
+				break;
+			case BLEQ:
+				mvwprintw( win, i+1, x, "BLEQ %d %d %d", inst.dest, inst.a1, inst.a2);
+				break;
+			case B:
+				mvwprintw( win, i+1, (maxx - 3)/2, "B %d", inst.dest );
+				break;
+			case ST:
+				mvwprintw( win, i+1, (maxx - 7)/2, "ST r%d %d", inst.dest, inst.a1 );
+				break;
+			case STI:
+				mvwprintw( win, i+1, (maxx - 8)/2, "STI r%d %d", inst.dest, inst.a1 );
+				break;
+		}
+	}
+	mvwprintw( win, maxy - 2, (maxx - 6)/2, "halt=%d", proc->exec.halt );
+	box( win, 0, 0 );
+	mvwprintw( win, 0, (maxx - 10)/2, "write back" );
 	wrefresh( win );
 }
 
@@ -149,16 +322,23 @@ void init_ncurses( RAM* ram_in, processor* proc_in )
 
 	program_win = create_subwin( ram_win, ram_win_h/2 - 1, ram_win_w - 2, ram_win_h/2 + 1, 1 );
 	refresh_program( program_win );
-	wrefresh( ram_win );
 
 	int proc_win_h = LINES - 5;
 	int proc_win_w = COLS - ram_win_w;
 	proc_win = create_win( proc_win_h, proc_win_w, 1, ram_win_w );
 	mvwprintw( proc_win, 0,(proc_win_w - 9)/2, "PROCESSOR" );
-	wrefresh( proc_win );
 
-	rf_win = create_subwin( proc_win, proc_win_h - 2, proc_win_w/5 - 1, 2, ram_win_w + proc_win_w - (proc_win_w/5));
+	rf_win = create_subwin( proc_win, proc_win_h - 2, (proc_win_w-2)/5, 2, ram_win_w + proc_win_w - (proc_win_w/5) - 1);
 	refresh_reg_file( rf_win );
+
+	fd_win = create_subwin( proc_win, (proc_win_h - 2)/3, proc_win_w - (proc_win_w-2)/5 - 2, 2, ram_win_w + 1);
+	refresh_fd( fd_win );
+
+	exec_win = create_subwin( proc_win, (proc_win_h - 2)/3, proc_win_w - (proc_win_w-2)/5 - 2, (proc_win_h - 2)/3 + 2, ram_win_w + 1 );
+	refresh_exec( exec_win );
+
+	wb_win = create_subwin( proc_win, (proc_win_h - 2)/3, proc_win_w - (proc_win_w-2)/5 - 2, 2*(proc_win_h - 2)/3 + 2, ram_win_w + 1 );
+	refresh_wb( wb_win );
 
 	refresh();
 }
@@ -168,4 +348,7 @@ void redraw()
 	refresh_data( data_win );
 	refresh_program( program_win );
 	refresh_reg_file( rf_win );
+	refresh_fd( fd_win );
+	refresh_exec( exec_win );
+	refresh_wb( wb_win );
 }
