@@ -1,3 +1,4 @@
+#include <unistd.h>
 #include "gui.h"
 
 int main ( int argc, char *argv[] )
@@ -94,6 +95,7 @@ int main ( int argc, char *argv[] )
 
 	while ( (run || a != 'x') && !finished )
 	{
+		redraw();
 		if ( a == 'r' )
 			run = true;
 
@@ -109,6 +111,8 @@ int main ( int argc, char *argv[] )
 
 		if ( !run )
 			a = getch();
+		else
+			usleep(10000);
 	}
 
 	tidy_up_ncurses();

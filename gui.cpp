@@ -119,19 +119,31 @@ void init_ncurses( RAM* ram_in, processor* proc_in )
 	mvwprintw( help_win, 1, (COLS - 58)/2, "<ENTER> - Step execition, <r> - run until finish");
 	wrefresh( help_win );
 
-	ram_win = create_win( LINES - 4, COLS/4, 0, 0 );
-	mvwprintw( ram_win, 1, (COLS/4 - 3)/2, "RAM" );
-	mvwprintw( ram_win, 2, (COLS/4 - 4)/2, "data" );
-	mvwprintw( ram_win, (LINES - 4)/2 + 1, (COLS/4 - 4)/2, "code" );
+	int ram_win_h = LINES - 4;
+	int ram_win_w = COLS/4;
+	ram_win = create_win( ram_win_h, ram_win_w, 0, 0 );
+	mvwprintw( ram_win, 1, (ram_win_w - 3)/2, "RAM" );
+	mvwprintw( ram_win, 2, (ram_win_w - 4)/2, "data" );
+	mvwprintw( ram_win, ram_win_h/2 + 1, (ram_win_w - 4)/2, "code" );
 
-	data_win = create_subwin( ram_win, (LINES - 4)/2 - 2, COLS/4 - 2, 3, 1 );
+	data_win = create_subwin( ram_win, ram_win_h/2 - 2, ram_win_w - 2, 3, 1 );
 	refresh_data( data_win, ram );
 
-	program_win = create_subwin( ram_win, (LINES - 4)/2 - 2, COLS/4 - 2, (LINES - 4)/2 + 2, 1 );
+	program_win = create_subwin( ram_win, ram_win_h/2 - 2, ram_win_w - 2, ram_win_h/2 + 2, 1 );
 	refresh_program( program_win, ram );
 	wrefresh( ram_win );
 
-	proc_win = create_win( LINES - 4, COLS*3/4, 0, COLS/4 );
+	int proc_win_h = LINES - 4;
+	int proc_win_w = COLS - ram_win_w;
+	proc_win = create_win( proc_win_h, proc_win_w, 0, ram_win_w );
+
+	//rf_win = create_subwin( proc_win,
 
 	refresh();
+}
+
+void redraw()
+{
+	refresh_data( data_win, ram );
+	refresh_program( program_win, ram );
 }
