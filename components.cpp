@@ -49,6 +49,8 @@ RAM::RAM ( int code_size, int data_size )
 {
 	code = new instruction[code_size];
 	data = new int[data_size];
+	c_size = code_size;
+	d_size = data_size;
 }
 
 int RAM::add ( int index, instruction i )

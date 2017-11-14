@@ -26,6 +26,7 @@ public:
 class RAM
 {
 public:
+	int c_size, d_size;
 	instruction *code;
 	int *data;
 
