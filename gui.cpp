@@ -126,7 +126,7 @@ void refresh_reg_file( WINDOW *win )
 void refresh_fd( WINDOW *win )
 {
 	int x, y, maxx, maxy;
-	instruction inst = proc->fd.inst;
+	instruction inst = proc->fd.out;
 	getmaxyx( win, maxy, maxx );
 	werase( win );
 	x = (maxx-15)/2;
@@ -182,12 +182,12 @@ void refresh_fd( WINDOW *win )
 void refresh_exec( WINDOW *win )
 {
 	int x, y, maxx, maxy;
-	instruction inst = proc->exec.inst1;
+	instruction inst = proc->exec.out;
 	getmaxyx( win, maxy, maxx );
 	werase( win );
 	x = (maxx-13)/2;
 	y = (maxy-2)/2;
-	if( proc->exec.halt == 0 ){
+	if( inst.op != NOP ){
 		switch ( inst.op )
 		{
 			case NOP:
@@ -253,22 +253,22 @@ void refresh_wb( WINDOW *win )
 				mvwprintw( win, i+1, (maxx-3)/2, "NOP");
 				break;
 			case ADD:
-				mvwprintw( win, i+1, x, "ADD r%d %d %d", inst.dest, inst.a1, inst.a2 );
+				mvwprintw( win, i+1, x, "ADD r%d %d", inst.dest, inst.a1, inst.a2 );
 				break;
 			case ADDI:
-				mvwprintw( win, i+1, x, "ADDI r%d %d %d", inst.dest, inst.a1, inst.a2 );
+				mvwprintw( win, i+1, x, "ADDI r%d %d", inst.dest, inst.a1, inst.a2 );
 				break;
 			case SUB:
-				mvwprintw( win, i+1, x, "SUB r%d %d %d", inst.dest, inst.a1, inst.a2);
+				mvwprintw( win, i+1, x, "SUB r%d %d", inst.dest, inst.a1, inst.a2);
 				break;
 			case SUBI:
-				mvwprintw( win, i+1, x, "SUBI r%d %d %d", inst.dest, inst.a1, inst.a2);
+				mvwprintw( win, i+1, x, "SUBI r%d %d", inst.dest, inst.a1, inst.a2);
 				break;
 			case MUL:
-				mvwprintw( win, i+1, x, "MUL r%d %d %d", inst.dest, inst.a1, inst.a2);
+				mvwprintw( win, i+1, x, "MUL r%d %d", inst.dest, inst.a1, inst.a2);
 				break;
 			case DIV:
-				mvwprintw( win, i+1, x, "DIV  r%d %d %d", inst.dest, inst.a1, inst.a2);
+				mvwprintw( win, i+1, x, "DIV  r%d %d", inst.dest, inst.a1, inst.a2);
 				break;
 			case LD:
 				mvwprintw( win, i+1, (maxx - 7)/2, "LD r%d %d", inst.dest, inst.a1 );
@@ -276,17 +276,7 @@ void refresh_wb( WINDOW *win )
 			case LDI:
 				mvwprintw( win, i+1, (maxx - 8)/2, "LDI r%d %d", inst.dest, inst.a1 );
 				break;
-			case BLEQ:
-				mvwprintw( win, i+1, x, "BLEQ %d %d %d", inst.dest, inst.a1, inst.a2);
-				break;
-			case B:
-				mvwprintw( win, i+1, (maxx - 3)/2, "B %d", inst.dest );
-				break;
-			case ST:
-				mvwprintw( win, i+1, (maxx - 7)/2, "ST r%d %d", inst.dest, inst.a1 );
-				break;
-			case STI:
-				mvwprintw( win, i+1, (maxx - 8)/2, "STI r%d %d", inst.dest, inst.a1 );
+			default:
 				break;
 		}
 	}

@@ -131,6 +131,7 @@ int execute::exec ()
 	write = false;
 	if ( !halt ){
 		inst2 = inst1;
+		out = inst2;
 		switch ( inst2.op )
 		{
 			case NOP:
@@ -200,7 +201,7 @@ int execute::exec ()
 	}
 	else
 	{
-		//cout << "execute - [buffer empty]";
+		out.op = NOP;
 		return 0;
 	}
 }
@@ -236,6 +237,7 @@ void fetch_decode::fetch_instruction ()
 {
 	halt = false;
 	inst = ram->code[ rf->pc ];
+	out = inst;
 	switch ( inst.op )
 	{
 		case NOP:

@@ -62,7 +62,7 @@ class processor;
 class execute
 {
 public:
-	instruction inst1, inst2;
+	instruction inst1, inst2, out;
 	bool halt, write;
 	processor *proc;
 	RAM *ram;
@@ -78,7 +78,7 @@ public:
 class fetch_decode
 {
 public:
-	instruction inst;
+	instruction inst, out;
 	RAM *ram;
 	execute *exec;
 	register_file *rf;

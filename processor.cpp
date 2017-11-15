@@ -98,12 +98,9 @@ int main ( int argc, char *argv[] )
 		if ( a == 'r' )
 			run = true;
 
-		if ( i % 2 == 0 )
-			p.tick();
-		else
-			finished = p.tock();
-
+		p.tick();
 		redraw();
+		finished = p.tock();
 
 		if ( !run )
 			a = getch();
