@@ -99,8 +99,8 @@ int main ( int argc, char *argv[] )
 			run = true;
 
 		p.tick();
-		redraw();
 		finished = p.tock();
+		redraw();
 
 		if ( !run )
 			a = getch();

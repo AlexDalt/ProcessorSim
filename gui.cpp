@@ -244,9 +244,9 @@ void refresh_wb( WINDOW *win )
 	werase( win );
 	x = (maxx-13)/2;
 
-	for( int i = 0; i < proc->wb.buffer.size(); i++ )
+	for( int i = 0; i < proc->wb.out.size(); i++ )
 	{
-		instruction inst = proc->wb.buffer[ i ];
+		instruction inst = proc->wb.out[ i ];
 		switch ( inst.op )
 		{
 			case NOP:

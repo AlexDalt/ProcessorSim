@@ -101,6 +101,7 @@ void write_back::buffer_write ( instruction inst )
 
 void write_back::write ()
 {
+	out = buffer;
 	if ( !buffer.empty() ){
 		instruction i = buffer.front();
 		buffer.pop_front();

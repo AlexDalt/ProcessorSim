@@ -49,7 +49,7 @@ class write_back
 {
 public:
 	register_file *rf;
-	deque <instruction> buffer;
+	deque <instruction> buffer, out;
 
 	write_back ( register_file *reg_pointer );
 	void buffer_write ( instruction inst );
