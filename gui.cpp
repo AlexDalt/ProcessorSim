@@ -2,7 +2,7 @@
 int row, col;
 RAM *ram;
 processor *proc;
-WINDOW *ram_win, *proc_win, *help_win, *data_win, *program_win, *rf_win, *fd_win, *exec_win, *wb_win;
+WINDOW *ram_win, *proc_win, *help_win, *data_win, *program_win, *rf_win, *fetch_win, *decode_win, *exec_win, *wb_win;
 
 WINDOW *create_win( int height, int width, int starty, int startx )
 {
@@ -123,10 +123,10 @@ void refresh_reg_file( WINDOW *win )
 	wrefresh( win );
 }
 
-void refresh_fd( WINDOW *win )
+void refresh_fetch( WINDOW *win )
 {
 	int x, y, maxx, maxy;
-	instruction inst = proc->fd.out;
+	instruction inst = ram->code[ proc->rf.pc ];
 	getmaxyx( win, maxy, maxx );
 	werase( win );
 	x = (maxx-15)/2;
@@ -173,21 +173,82 @@ void refresh_fd( WINDOW *win )
 			mvwprintw( win, y, (maxx - 8)/2, "STI r%d %d", inst.dest, inst.a1 );
 			break;
 	}
-	mvwprintw( win, maxy-2, (maxx - 6)/2, "halt=%d", proc->fd.halt );
+	mvwprintw( win, maxy-2, (maxx - 6)/2, "halt=%d", proc->f.halt );
 	box( win, 0, 0 );
-	mvwprintw( win, 0, (maxx - 12)/2, "fetch/decode");
+	mvwprintw( win, 0, (maxx - 5)/2, "fetch" );
+	wrefresh( win );
+}
+
+void refresh_decode( WINDOW *win )
+{
+	instruction inst = proc->d.inst_in;
+	int x, y, maxx, maxy;
+	getmaxyx( win, maxy, maxx );
+	x = (maxx-15)/2;
+	y = (maxy-2)/2;
+
+	werase( win );
+	if ( !(proc->d.halt) )
+	{
+		switch ( inst.op )
+		{
+			case NOP:
+				mvwprintw( win, y, (maxx-3)/2, "NOP");
+				break;
+			case ADD:
+				mvwprintw( win, y, x, "ADD r%d r%d r%d", inst.dest, inst.a1, inst.a2 );
+				break;
+			case ADDI:
+				mvwprintw( win, y, x, "ADDI r%d r%d %d", inst.dest, inst.a1, inst.a2 );
+				break;
+			case SUB:
+				mvwprintw( win, y, x, "SUB r%d r%d r%d", inst.dest, inst.a1, inst.a2);
+				break;
+			case SUBI:
+				mvwprintw( win, y, x, "SUBI r%d r%d %d", inst.dest, inst.a1, inst.a2);
+				break;
+			case MUL:
+				mvwprintw( win, y, x, "MUL r%d r%d r%d", inst.dest, inst.a1, inst.a2);
+				break;
+			case DIV:
+				mvwprintw( win, y, x, "DIV  r%d r%d r%d", inst.dest, inst.a1, inst.a2);
+				break;
+			case LD:
+				mvwprintw( win, y, (maxx - 8)/2, "LD r%d r%d", inst.dest, inst.a1 );
+				break;
+			case LDI:
+				mvwprintw( win, y, (maxx - 8)/2, "LDI r%d %d", inst.dest, inst.a1 );
+				break;
+			case BLEQ:
+				mvwprintw( win, y, x, "BLEQ r%d r%d %d", inst.dest, inst.a1, inst.a2);
+				break;
+			case B:
+				mvwprintw( win, y, (maxx - 3)/2, "B %d", inst.dest );
+				break;
+			case ST:
+				mvwprintw( win, y, (maxx - 8)/2, "ST r%d r%d", inst.dest, inst.a1 );
+				break;
+			case STI:
+				mvwprintw( win, y, (maxx - 8)/2, "STI r%d %d", inst.dest, inst.a1 );
+				break;
+		}
+	}
+
+	mvwprintw( win, maxy-2, (maxx - 6)/2, "halt=%d", proc->d.wait );
+	box( win, 0, 0 );
+	mvwprintw( win, 0, (maxx-6)/2, "decode" );
 	wrefresh( win );
 }
 
 void refresh_exec( WINDOW *win )
 {
 	int x, y, maxx, maxy;
-	instruction inst = proc->exec.out;
+	instruction inst = proc->exec.inst_in;
 	getmaxyx( win, maxy, maxx );
 	werase( win );
 	x = (maxx-13)/2;
 	y = (maxy-2)/2;
-	if( inst.op != NOP ){
+	if( !(proc->exec.halt) ){
 		switch ( inst.op )
 		{
 			case NOP:
@@ -244,9 +305,9 @@ void refresh_wb( WINDOW *win )
 	werase( win );
 	x = (maxx-13)/2;
 
-	for( int i = 0; i < proc->wb.out.size(); i++ )
+	for( int i = 0; i < proc->wb.buffer.size(); i++ )
 	{
-		instruction inst = proc->wb.out[ i ];
+		instruction inst = proc->wb.buffer[ i ];
 		switch ( inst.op )
 		{
 			case NOP:
@@ -280,7 +341,7 @@ void refresh_wb( WINDOW *win )
 				break;
 		}
 	}
-	mvwprintw( win, maxy - 2, (maxx - 6)/2, "halt=%d", proc->exec.halt );
+	mvwprintw( win, maxy - 2, (maxx - 6)/2, "halt=%d", (proc->wb.buffer.size() == 0) );
 	box( win, 0, 0 );
 	mvwprintw( win, 0, (maxx - 10)/2, "write back" );
 	wrefresh( win );
@@ -321,13 +382,16 @@ void init_ncurses( RAM* ram_in, processor* proc_in )
 	rf_win = create_subwin( proc_win, proc_win_h - 2, (proc_win_w-2)/5, 2, ram_win_w + proc_win_w - (proc_win_w/5) - 1);
 	refresh_reg_file( rf_win );
 
-	fd_win = create_subwin( proc_win, (proc_win_h - 2)/3, proc_win_w - (proc_win_w-2)/5 - 2, 2, ram_win_w + 1);
-	refresh_fd( fd_win );
+	fetch_win = create_subwin( proc_win, (proc_win_h - 2)/4, proc_win_w - (proc_win_w-2)/5 - 2, 2, ram_win_w + 1);
+	refresh_fetch( fetch_win );
 
-	exec_win = create_subwin( proc_win, (proc_win_h - 2)/3, proc_win_w - (proc_win_w-2)/5 - 2, (proc_win_h - 2)/3 + 2, ram_win_w + 1 );
+	decode_win = create_subwin( proc_win, (proc_win_h - 2)/4, proc_win_w - (proc_win_w-2)/5 - 2, (proc_win_h - 2)/4 + 2, ram_win_w + 1);
+	refresh_decode( decode_win );
+
+	exec_win = create_subwin( proc_win, (proc_win_h - 2)/4, proc_win_w - (proc_win_w-2)/5 - 2, 2*(proc_win_h - 2)/4 + 2, ram_win_w + 1 );
 	refresh_exec( exec_win );
 
-	wb_win = create_subwin( proc_win, (proc_win_h - 2)/3, proc_win_w - (proc_win_w-2)/5 - 2, 2*(proc_win_h - 2)/3 + 2, ram_win_w + 1 );
+	wb_win = create_subwin( proc_win, (proc_win_h - 2)/4, proc_win_w - (proc_win_w-2)/5 - 2, 3*(proc_win_h - 2)/4 + 2, ram_win_w + 1 );
 	refresh_wb( wb_win );
 
 	refresh();
@@ -338,7 +402,8 @@ void redraw()
 	refresh_data( data_win );
 	refresh_program( program_win );
 	refresh_reg_file( rf_win );
-	refresh_fd( fd_win );
+	refresh_fetch( fetch_win );
+	refresh_decode( decode_win );
 	refresh_exec( exec_win );
 	refresh_wb( wb_win );
 }

@@ -49,7 +49,7 @@ class write_back
 {
 public:
 	register_file *rf;
-	deque <instruction> buffer, out;
+	deque <instruction> buffer;
 
 	write_back ( register_file *reg_pointer );
 	void buffer_write ( instruction inst );
@@ -62,7 +62,7 @@ class processor;
 class execute
 {
 public:
-	instruction inst1, inst2, out;
+	instruction inst_in, inst_out;
 	bool halt, write;
 	processor *proc;
 	RAM *ram;
@@ -70,21 +70,36 @@ public:
 	write_back *wb;
 
 	execute ( processor* proc_in, RAM *rp, register_file *rf_in, write_back *out );
-	int exec ();
-	void push ();
 	void buffer_exec ( instruction i );
+	void exec ();
+	void push ();
 };
 
-class fetch_decode
+class decode
 {
 public:
-	instruction inst, out;
-	RAM *ram;
+	instruction inst_in, inst_out;
 	execute *exec;
+	register_file *rf;
+	bool wait, halt;
+
+	decode ( register_file *rf_in, execute *e_in );
+	void buffer_dec ( instruction i );
+	void fetch_operands ();
+	void push ();
+	void flush ();
+};
+
+class fetch
+{
+public:
+	instruction inst;
+	RAM *ram;
+	decode *d;
 	register_file *rf;
 	bool halt;
 
-	fetch_decode ( RAM *rp, register_file *rf_in, execute *e_in );
+	fetch ( RAM *rp, register_file *rf_in, decode *d_in );
 	void fetch_instruction ();
 	void push ();
 	void flush ();
@@ -97,7 +112,8 @@ public:
 	register_file rf;
 	write_back wb;
 	execute exec;
-	fetch_decode fd;
+	decode d;
+	fetch f;
 	int cycles;
 	int completed_instructions;
 	int num_code;

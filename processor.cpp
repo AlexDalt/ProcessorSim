@@ -93,6 +93,8 @@ int main ( int argc, char *argv[] )
 
 	init_ncurses( &ram, &p );
 
+	a = getch();
+
 	while ( (run || a != 'x') && !finished )
 	{
 		if ( a == 'r' )
