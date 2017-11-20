@@ -107,7 +107,7 @@ int main ( int argc, char *argv[] )
 		if ( !run )
 			a = getch();
 		else
-			usleep(20000);
+			usleep(50000);
 
 		i++;
 	}

@@ -71,7 +71,7 @@ public:
 
 	execute ( processor* proc_in, RAM *rp, register_file *rf_in, write_back *out );
 	void buffer_exec ( instruction i );
-	void exec ();
+	int exec ();
 	void push ();
 };
 
@@ -118,6 +118,7 @@ public:
 	int completed_instructions;
 	int num_code;
 	int num_data;
+	float inst_per_cycle;
 
 	processor ( int code, int data, RAM *rp );
 	void flush ();

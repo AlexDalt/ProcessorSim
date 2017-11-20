@@ -116,7 +116,10 @@ void refresh_reg_file( WINDOW *win )
 	mvwprintw( win, 1, 1, "pc - %3d", proc->rf.pc );
 	for( int i = 0; i < NUM_ARCH_REG; i++)
 	{
-		mvwprintw( win, i+2, 1, "r%d - %3d, d=%d", i, proc->rf.r[ i ], proc->rf.dirty[ i ] );
+		if( proc->rf.dirty[ i ] )
+			wattron( win, COLOR_PAIR( 1 ) );
+		mvwprintw( win, i+2, 1, "r%d - %3d", i, proc->rf.r[ i ] );
+		wattroff( win, COLOR_PAIR( 1 ) );
 	}
 	box( win, 0, 0 );
 	mvwprintw( win, 0, (x - 2)/2, "rf" );
@@ -347,9 +350,19 @@ void refresh_wb( WINDOW *win )
 	wrefresh( win );
 }
 
+void refresh_help( WINDOW *win )
+{
+	werase( win );
+	box( win, 0, 0 );
+	mvwprintw( win, 1, (COLS - 72)/2, "<anything> - Step execition, <r> - run until finish, <x> - exit");
+	mvwprintw( win, 2, (COLS - 82)/2, "completed instructions: %d, completed cycles: %d, instructions/cycle: %.3f", proc->completed_instructions, proc->cycles, proc->inst_per_cycle );
+	wrefresh( win );
+}
+
 void init_ncurses( RAM* ram_in, processor* proc_in )
 {
 	initscr();
+	start_color();
 	cbreak();
 	noecho();
 	curs_set(0);
@@ -359,9 +372,10 @@ void init_ncurses( RAM* ram_in, processor* proc_in )
 
 	refresh();
 
+	init_pair(1, COLOR_BLACK, COLOR_RED);
+
 	help_win = create_win( 4, COLS - 10, LINES - 4, 5 );
-	mvwprintw( help_win, 1, (COLS - 72)/2, "<anything> - Step execition, <r> - run until finish, <x> - exit");
-	wrefresh( help_win );
+	refresh_help( help_win );
 
 	int ram_win_h = LINES - 5;
 	int ram_win_w = COLS/4;
@@ -406,4 +420,5 @@ void redraw()
 	refresh_decode( decode_win );
 	refresh_exec( exec_win );
 	refresh_wb( wb_win );
+	refresh_help( help_win );
 }

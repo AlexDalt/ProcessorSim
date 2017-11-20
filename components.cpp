@@ -122,7 +122,7 @@ execute::execute( processor *proc_in, RAM *rp, register_file *rf_in, write_back 
 	halt = true;
 }
 
-void execute::exec ()
+int execute::exec ()
 {
 	write = false;
 	if ( !halt ){
@@ -180,7 +180,9 @@ void execute::exec ()
 				ram->data[ inst_out.a1 ] = inst_out.dest;
 				break;
 		}
+		return 1;
 	}
+	return 0;
 }
 
 void execute::push ()
@@ -369,7 +371,7 @@ void processor::flush ()
 int processor::tick ()
 {
 	wb.write();
-	exec.exec();
+	completed_instructions += exec.exec();
 	d.fetch_operands();
 	f.fetch_instruction();
 
@@ -383,7 +385,7 @@ int processor::tock ()
 	f.push();
 
 	cycles++;
-	float inst_per_cycle = (float) completed_instructions / (float) cycles;
+	inst_per_cycle = (float) completed_instructions / (float) cycles;
 
 	if ( rf.pc >= num_code + 1 )
 		return 1;

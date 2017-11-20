@@ -25,12 +25,11 @@ NOP			// no opperation
 	* Sorting algorithms (eg. bubble sort + quick sort)
 	* Numerical algorithms (eg. GCD or Hamming weight)
 	* Recursive algorithms (eg. Factorial)
-* Write assembler to read benchmark programs and convert them into machine readable
-* Fetch/Decode/Execute pipeline stages
 * Update cycle count (finished instruction count increments when it leaves wb)
+* Change execution time to accurate for each instruction
 * Allow the selection of a new test program after completion
-* Branch prediction into the fetch unit
 * Multiple execute units (2xALU, 1xLSU, 1xBU) w/ blocking issue
+* Branch prediction into the fetch unit
 * Sub pipelining
 * Reservation stations
 * Extend branch prediction mechanism
