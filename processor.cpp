@@ -11,8 +11,6 @@ int main ( int argc, char *argv[] )
 	{
 		string file_path = directory + file_name;
 
-		cout << file_name;
-
 		ifstream file ( file_path );
 		string line;
 		int num_code= 0;
@@ -88,7 +86,6 @@ int main ( int argc, char *argv[] )
 		char a = getchar();
 		int finished = 0;
 		bool run = false;
-		int i = 0;
 
 		a = getch();
 
@@ -105,8 +102,6 @@ int main ( int argc, char *argv[] )
 				a = getch();
 			else
 				usleep(50000);
-
-			i++;
 		}
 
 		file_name = selection_menu();
