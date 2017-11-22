@@ -3,13 +3,12 @@
 
 int main ( int argc, char *argv[] )
 {
-	if ( argc < 1 )
-	{
-		cerr << "Error: too few arguments\n";
-		return -1;
-	}
+	init_ncurses();
+	string directory = "test_code/";
+	string file_name = selection_menu();
+	string file_path = directory + file_name;
 
-	ifstream file ( argv[1] );
+	ifstream file ( file_path );
 	string line;
 	int num_code= 0;
 	int data = 1;
@@ -36,6 +35,8 @@ int main ( int argc, char *argv[] )
 	processor p ( num_code, num_data, &ram );
 	int inst_index = 0;
 	int data_index = 0;
+
+	init_params( &ram, &p );
 
 	data = 1;
 
@@ -77,21 +78,12 @@ int main ( int argc, char *argv[] )
 		}
 	}
 
-	for ( int i = 0 ; i < num_code ; i++ )
-	{
-		cout << "Opp " << i << " :";
-		cout << " op - " << p.ram->code[i].op;
-		cout << " dest - " << p.ram->code[i].dest;
-		cout << " a1 - " << p.ram->code[i].a1;
-		cout << " a2 - " << p.ram->code[i].a2 << endl;
-	}
+	redraw();
 
 	char a = getchar();
 	int finished = 0;
 	bool run = false;
 	int i = 0;
-
-	init_ncurses( &ram, &p );
 
 	a = getch();
 

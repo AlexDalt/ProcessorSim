@@ -1,4 +1,6 @@
 #include "gui.h"
+#include "menu.h"
+
 int row, col;
 RAM *ram;
 processor *proc;
@@ -359,7 +361,7 @@ void refresh_help( WINDOW *win )
 	wrefresh( win );
 }
 
-void init_ncurses( RAM* ram_in, processor* proc_in )
+void init_ncurses()
 {
 	initscr();
 	start_color();
@@ -367,15 +369,12 @@ void init_ncurses( RAM* ram_in, processor* proc_in )
 	noecho();
 	curs_set(0);
 	getmaxyx( stdscr, row, col );
-	ram = ram_in;
-	proc = proc_in;
 
 	refresh();
 
 	init_pair(1, COLOR_BLACK, COLOR_RED);
 
 	help_win = create_win( 4, COLS - 10, LINES - 4, 5 );
-	refresh_help( help_win );
 
 	int ram_win_h = LINES - 5;
 	int ram_win_w = COLS/4;
@@ -383,10 +382,8 @@ void init_ncurses( RAM* ram_in, processor* proc_in )
 	mvwprintw( ram_win, 0, (ram_win_w - 7)/2, "MEMORY" );
 
 	data_win = create_subwin( ram_win, ram_win_h/2 - 1, ram_win_w - 2, 2, 1 );
-	refresh_data( data_win );
 
 	program_win = create_subwin( ram_win, ram_win_h/2 - 1, ram_win_w - 2, ram_win_h/2 + 1, 1 );
-	refresh_program( program_win );
 
 	int proc_win_h = LINES - 5;
 	int proc_win_w = COLS - ram_win_w;
@@ -394,21 +391,22 @@ void init_ncurses( RAM* ram_in, processor* proc_in )
 	mvwprintw( proc_win, 0,(proc_win_w - 9)/2, "PROCESSOR" );
 
 	rf_win = create_subwin( proc_win, proc_win_h - 2, (proc_win_w-2)/5, 2, ram_win_w + proc_win_w - (proc_win_w/5) - 1);
-	refresh_reg_file( rf_win );
 
 	fetch_win = create_subwin( proc_win, (proc_win_h - 2)/4, proc_win_w - (proc_win_w-2)/5 - 2, 2, ram_win_w + 1);
-	refresh_fetch( fetch_win );
 
 	decode_win = create_subwin( proc_win, (proc_win_h - 2)/4, proc_win_w - (proc_win_w-2)/5 - 2, (proc_win_h - 2)/4 + 2, ram_win_w + 1);
-	refresh_decode( decode_win );
 
 	exec_win = create_subwin( proc_win, (proc_win_h - 2)/4, proc_win_w - (proc_win_w-2)/5 - 2, 2*(proc_win_h - 2)/4 + 2, ram_win_w + 1 );
-	refresh_exec( exec_win );
 
 	wb_win = create_subwin( proc_win, (proc_win_h - 2)/4, proc_win_w - (proc_win_w-2)/5 - 2, 3*(proc_win_h - 2)/4 + 2, ram_win_w + 1 );
-	refresh_wb( wb_win );
 
 	refresh();
+}
+
+void init_params( RAM* ram_in, processor* proc_in )
+{
+	ram = ram_in;
+	proc = proc_in;
 }
 
 void redraw()
@@ -421,4 +419,94 @@ void redraw()
 	refresh_exec( exec_win );
 	refresh_wb( wb_win );
 	refresh_help( help_win );
+}
+
+const char *selection_menu()
+{
+	DIR *dir;
+	struct dirent *ent;
+	int i;
+
+	int c;
+	const char *r_value;
+	ITEM **my_items;
+	ITEM *cur_item;
+	MENU *my_menu;
+	WINDOW *my_menu_win;
+	int num_items = 0;
+
+	if( (dir = opendir( "test_code/" )) != NULL )
+	{
+		while( (ent = readdir (dir)) != NULL )
+		{
+			num_items++;
+		}
+		closedir( dir );
+		string choices[ num_items + 2 ];
+		dir = opendir( "test_code/" );
+		for( i = 0; i < num_items; i++ )
+		{
+			ent = readdir( dir );
+			choices[ i ] = ent->d_name;
+		}
+		closedir( dir );
+		choices[ num_items ] = "Exit";
+		num_items = num_items + 2;
+
+		my_items = (ITEM **)calloc( num_items, sizeof(ITEM *) );
+		for( i = 0; i < num_items - 1; i++ )
+			my_items[ i ] = new_item( choices[ i ].c_str(), (char *)NULL );
+
+		my_items[ num_items - 1 ] = new_item( (char *)NULL, (char *)NULL );
+
+		my_menu = new_menu( (ITEM **)my_items );
+
+		my_menu_win = newwin( LINES-8, 40, 4, 4 );
+		keypad( my_menu_win, TRUE );
+
+		set_menu_win( my_menu, my_menu_win );
+		set_menu_sub( my_menu, derwin( my_menu_win, 6, 38, 3, 1 ) );
+		set_menu_mark( my_menu, " * " );
+		box( my_menu_win, 0, 0 );
+		mvwprintw( my_menu_win, 1, 2, "PROGRAMS" );
+		mvwaddch( my_menu_win, 2, 0, ACS_LTEE );
+		mvwhline( my_menu_win, 2, 1, ACS_HLINE, 38 );
+		mvwaddch( my_menu_win, 2, 39, ACS_RTEE );
+
+		post_menu( my_menu );
+		wrefresh( my_menu_win );
+
+		bool enter = false;
+		while( (c = wgetch( my_menu_win )) && !enter )
+		{
+			switch(c)
+			{
+				case KEY_DOWN:
+					menu_driver( my_menu, REQ_DOWN_ITEM );
+					break;
+				case KEY_UP:
+					menu_driver( my_menu, REQ_UP_ITEM );
+					break;
+				case 10:
+					cur_item = current_item( my_menu );
+					r_value = item_name( cur_item );
+
+					refresh();
+					pos_menu_cursor( my_menu );
+					enter = true;
+					break;
+			}
+			wrefresh( my_menu_win );
+		}
+		unpost_menu( my_menu );
+		free_menu( my_menu );
+		for( i = 0; i < num_items; i++ )
+			free_item( my_items[ i ] );
+		wborder( my_menu_win, ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' );
+		wrefresh( my_menu_win );
+		delwin( my_menu_win );
+
+		return r_value;
+	}
+	return NULL;
 }
