@@ -451,11 +451,10 @@ const char *selection_menu()
 		}
 		closedir( dir );
 		choices[ num_items ] = "Exit";
-		num_items = num_items + 2;
 
 		my_items = (ITEM **)calloc( num_items, sizeof(ITEM *) );
-		for( i = 0; i < num_items - 1; i++ )
-			my_items[ i ] = new_item( choices[ i ].c_str(), (char *)NULL );
+		for( i = 2; i < num_items + 1; i++ )
+			my_items[ i - 2 ] = new_item( choices[ i ].c_str(), (char *)NULL );
 
 		my_items[ num_items - 1 ] = new_item( (char *)NULL, (char *)NULL );
 
@@ -505,6 +504,10 @@ const char *selection_menu()
 		wborder( my_menu_win, ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' );
 		wrefresh( my_menu_win );
 		delwin( my_menu_win );
+		box( proc_win, 0, 0 );
+		wrefresh( proc_win );
+		box( ram_win, 0, 0 );
+		wrefresh( ram_win );
 
 		return r_value;
 	}
