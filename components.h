@@ -63,7 +63,7 @@ class execute
 {
 public:
 	instruction inst_in, inst_out;
-	bool halt, write;
+	bool halt, write, finished;
 	processor *proc;
 	RAM *ram;
 	register_file *rf;

@@ -412,7 +412,7 @@ void init_params( RAM* ram_in, processor* proc_in )
 void redraw()
 {
 	refresh_data( data_win );
-	refresh_program( program_win );
+	refresh_program( program_win )	;
 	refresh_reg_file( rf_win );
 	refresh_fetch( fetch_win );
 	refresh_decode( decode_win );
@@ -460,7 +460,7 @@ const char *selection_menu()
 
 		my_menu = new_menu( (ITEM **)my_items );
 
-		my_menu_win = newwin( LINES-8, 40, 4, 4 );
+		my_menu_win = newwin( LINES-8, 40, 4, (COLS-40)/2 );
 		keypad( my_menu_win, TRUE );
 
 		set_menu_win( my_menu, my_menu_win );
@@ -505,8 +505,12 @@ const char *selection_menu()
 		wrefresh( my_menu_win );
 		delwin( my_menu_win );
 		box( proc_win, 0, 0 );
+		int ram_win_w = COLS/4;
+		int proc_win_w = COLS - ram_win_w;
+		mvwprintw( proc_win, 0,(proc_win_w - 9)/2, "PROCESSOR" );
 		wrefresh( proc_win );
 		box( ram_win, 0, 0 );
+		mvwprintw( ram_win, 0, (ram_win_w - 7)/2, "MEMORY" );
 		wrefresh( ram_win );
 
 		return r_value;

@@ -120,11 +120,13 @@ execute::execute( processor *proc_in, RAM *rp, register_file *rf_in, write_back 
 	rf = rf_in;
 	wb = out;
 	halt = true;
+	finished = true;
 }
 
 int execute::exec ()
 {
 	write = false;
+	finished = false;
 	if ( !halt ){
 		inst_out = inst_in;
 		switch ( inst_out.op )
@@ -173,6 +175,7 @@ int execute::exec ()
 
 			case B:
 				rf->pc += inst_out.dest - 2;
+				proc->flush();
 				break;
 
 			case ST:
@@ -180,6 +183,7 @@ int execute::exec ()
 				ram->data[ inst_out.a1 ] = inst_out.dest;
 				break;
 		}
+		finished = true;
 		return 1;
 	}
 	return 0;
@@ -187,9 +191,10 @@ int execute::exec ()
 
 void execute::push ()
 {
-	if ( write && !halt )
+	if ( finished && !halt )
 	{
-		wb->buffer_write ( inst_out );
+		if( write )
+			wb->buffer_write ( inst_out );
 		write = false;
 		halt = true;
 	}
