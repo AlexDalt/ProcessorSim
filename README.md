@@ -22,12 +22,10 @@ NOP			// no opperation
 ## TODO
 * Write benchmark programs
 	* Standard kernels (eg. "Livermore Loops")
-	* Sorting algorithms (eg. bubble sort + quick sort)
 	* Numerical algorithms (eg. GCD or Hamming weight)
 	* Recursive algorithms (eg. Factorial)
 * Update cycle count (finished instruction count increments when it leaves wb)
 * Change execution time to accurate for each instruction
-* Allow the selection of a new test program after completion
 * Multiple execute units (2xALU, 1xLSU, 1xBU) w/ blocking issue
 * Branch prediction into the fetch unit
 * Sub pipelining
@@ -35,6 +33,6 @@ NOP			// no opperation
 * Extend branch prediction mechanism
 * Reorder buffer
 * Avoid dependancies
-* Register renaming
+* Register renaming (with support for dynamic cross-allocation eg trivial functions 0/1)
 * Execution unit that supports vector instructions
 * Cache memory

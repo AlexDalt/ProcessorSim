@@ -4,7 +4,7 @@
 int row, col;
 RAM *ram;
 processor *proc;
-WINDOW *ram_win, *proc_win, *help_win, *data_win, *program_win, *rf_win, *fetch_win, *decode_win, *exec_win, *wb_win;
+WINDOW *ram_win, *proc_win, *help_win, *data_win, *program_win, *rf_win, *fetch_win, *decode_win, *exec_win, *wb_win, *bp_win;
 
 WINDOW *create_win( int height, int width, int starty, int startx )
 {
@@ -181,6 +181,19 @@ void refresh_fetch( WINDOW *win )
 	mvwprintw( win, maxy-2, (maxx - 6)/2, "halt=%d", proc->f.halt );
 	box( win, 0, 0 );
 	mvwprintw( win, 0, (maxx - 5)/2, "fetch" );
+	mvwprintw( win, maxy-1, (maxx - 1)/2, "|" );
+	mvwprintw( win, maxy/2, maxx-1, "<" );
+	wrefresh( win );
+}
+
+void refresh_bp( WINDOW *win )
+{
+	int maxx, maxy;
+	getmaxyx( win, maxy, maxx );
+	werase( win );
+	box( win, 0, 0 );
+	mvwprintw( win, 0, (maxx - 16)/2, "branch predictor" );
+	mvwprintw( win, maxy/2, 0, "-" );
 	wrefresh( win );
 }
 
@@ -242,6 +255,7 @@ void refresh_decode( WINDOW *win )
 	mvwprintw( win, maxy-2, (maxx - 6)/2, "halt=%d", proc->d.wait );
 	box( win, 0, 0 );
 	mvwprintw( win, 0, (maxx-6)/2, "decode" );
+	mvwprintw( win, 0, (maxx-2)/4, "V" );
 	wrefresh( win );
 }
 
@@ -290,10 +304,10 @@ void refresh_exec( WINDOW *win )
 				mvwprintw( win, y, (maxx - 3)/2, "B %d", inst.dest );
 				break;
 			case ST:
-				mvwprintw( win, y, (maxx - 7)/2, "ST r%d %d", inst.dest, inst.a1 );
+				mvwprintw( win, y, (maxx - 7)/2, "ST %d %d", inst.dest, inst.a1 );
 				break;
 			case STI:
-				mvwprintw( win, y, (maxx - 8)/2, "STI r%d %d", inst.dest, inst.a1 );
+				mvwprintw( win, y, (maxx - 8)/2, "STI %d %d", inst.dest, inst.a1 );
 				break;
 		}
 	}
@@ -392,7 +406,9 @@ void init_ncurses()
 
 	rf_win = create_subwin( proc_win, proc_win_h - 2, (proc_win_w-2)/5, 2, ram_win_w + proc_win_w - (proc_win_w/5) - 1);
 
-	fetch_win = create_subwin( proc_win, (proc_win_h - 2)/4, proc_win_w - (proc_win_w-2)/5 - 2, 2, ram_win_w + 1);
+	fetch_win = create_subwin( proc_win, (proc_win_h - 2)/4, (proc_win_w - (proc_win_w-2)/5 - 2)/2, 2, ram_win_w + 1);
+
+	bp_win = create_subwin( proc_win, (proc_win_h - 2)/4, (proc_win_w - (proc_win_w-2)/5 - 2)/2, 2, ram_win_w + 2 + (proc_win_w - (proc_win_w-2)/5 - 2)/2 );
 
 	decode_win = create_subwin( proc_win, (proc_win_h - 2)/4, proc_win_w - (proc_win_w-2)/5 - 2, (proc_win_h - 2)/4 + 2, ram_win_w + 1);
 
@@ -419,6 +435,7 @@ void redraw()
 	refresh_exec( exec_win );
 	refresh_wb( wb_win );
 	refresh_help( help_win );
+	refresh_bp( bp_win );
 }
 
 const char *selection_menu()
@@ -464,7 +481,7 @@ const char *selection_menu()
 		keypad( my_menu_win, TRUE );
 
 		set_menu_win( my_menu, my_menu_win );
-		set_menu_sub( my_menu, derwin( my_menu_win, 6, 38, 3, 1 ) );
+		set_menu_sub( my_menu, derwin( my_menu_win, LINES-11, 38, 3, 1 ) );
 		set_menu_mark( my_menu, " * " );
 		box( my_menu_win, 0, 0 );
 		mvwprintw( my_menu_win, 1, 2, "PROGRAMS" );
