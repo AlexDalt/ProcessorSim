@@ -22,12 +22,13 @@ NOP			// no opperation
 ## TODO
 * Write benchmark programs
 	* Standard kernels (eg. "Livermore Loops")
-	* Numerical algorithms (eg. GCD or Hamming weight)
-	* Recursive algorithms (eg. Factorial)
+	* Numerical algorithms (eg. Hamming weight)
+	* Recursive fibonacci
+	* Matrix multiply
 * Update cycle count (finished instruction count increments when it leaves wb)
 * Change execution time to accurate for each instruction
 * Multiple execute units (2xALU, 1xLSU, 1xBU) w/ blocking issue
-* Branch prediction into the fetch unit
+* Branch prediction into the fetch unit (static etc)
 * Sub pipelining
 * Reservation stations
 * Extend branch prediction mechanism
