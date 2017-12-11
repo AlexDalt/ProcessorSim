@@ -19,6 +19,7 @@ public:
 	int dest;
 	int a1;
 	int a2;
+	int num;
 
 	instruction( string inst="NOP", string d="", string b1="", string b2="" );
 };
@@ -98,6 +99,7 @@ public:
 	decode *d;
 	register_file *rf;
 	bool halt;
+	int inst_count;
 
 	fetch ( RAM *rp, register_file *rf_in, decode *d_in );
 	void fetch_instruction ();

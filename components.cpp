@@ -326,6 +326,7 @@ fetch::fetch( RAM *rp, register_file *rf_in, decode *d_in )
 	rf = rf_in;
 	d = d_in;
 	halt = false;
+	inst_count = 0;
 }
 
 void fetch::flush ()
@@ -338,6 +339,8 @@ void fetch::fetch_instruction ()
 	if ( !halt )
 	{
 		inst = ram->code[ rf->pc ];
+		inst.num = inst_count;
+		inst_count++;
 	}
 }
 

@@ -20,11 +20,6 @@ NOP			// no opperation
 ```
 
 ## TODO
-* Write benchmark programs
-	* Standard kernels (eg. "Livermore Loops")
-	* Numerical algorithms (eg. Hamming weight)
-	* Recursive fibonacci
-	* Matrix multiply
 * Update cycle count (finished instruction count increments when it leaves wb)
 * Change execution time to accurate for each instruction
 * Multiple execute units (2xALU, 1xLSU, 1xBU) w/ blocking issue
