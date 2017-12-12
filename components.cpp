@@ -1,5 +1,7 @@
 #include "components.h"
 
+int exec_times[13] = { 1, 1, 1, 1, 1, 4, 20, 4, 1, 3, 2, 1, 1 };
+
 instruction::instruction ( string inst, string d, string b1, string b2 )
 {
 	if ( inst.compare ( "NOP" ) == 0 )
@@ -122,6 +124,7 @@ execute::execute( processor *proc_in, RAM *rp, register_file *rf_in, write_back 
 	rf = rf_in;
 	wb = out;
 	halt = true;
+	wait = false;
 	finished = true;
 }
 
@@ -131,66 +134,79 @@ int execute::exec ()
 	finished = false;
 	if ( !halt ){
 		inst_out = inst_in;
-		switch ( inst_out.op )
+		if ( exec_times[ inst_out.op ] > 1 && !wait )
 		{
-			case NOP:
-				break;
-
-			case ADD:
-			case ADDI:
-				inst_out.a1 = inst_out.a1 + inst_out.a2;
-				write = true;
-				break;
-
-			case SUB:
-			case SUBI:
-				inst_out.a1 = inst_out.a1 - inst_out.a2;
-				write = true;
-				break;
-
-			case MUL:
-				inst_out.a1 = inst_out.a1 * inst_out.a2;
-				write = true;
-				break;
-
-			case DIV:
-				inst_out.a1 = inst_out.a1 / inst_out.a2;
-				write = true;
-				break;
-
-			case LD:
-				inst_out.a1 = ram->data[ inst_out.a1 ];
-				write = true;
-				break;
-
-			case LDI:
-				write = true;
-				break;
-
-			case BLEQ:
-				if ( inst_out.dest <= inst_out.a1 )
-				{
-					rf->pc += inst_out.a2 - 2;
-					proc->flush();
-				}
-				break;
-
-			case B:
-				rf->pc += inst_out.dest - 2;
-				proc->flush();
-				break;
-
-			case ST:
-			case STI:
-				ram->data[ inst_out.a1 ] = inst_out.dest;
-				break;
+			wait = true;
+			rem_exec = exec_times[ inst_out.op ] - 1;
 		}
-		finished = true;
-		
-		if( write == true )
-			return 0;
+		else if ( wait && rem_exec > 1 )
+		{
+			rem_exec--;
+		}
 		else
-			return 1;
+		{
+			wait = false;
+			switch ( inst_out.op )
+			{
+				case NOP:
+					break;
+
+				case ADD:
+				case ADDI:
+					inst_out.a1 = inst_out.a1 + inst_out.a2;
+					write = true;
+					break;
+
+				case SUB:
+				case SUBI:
+					inst_out.a1 = inst_out.a1 - inst_out.a2;
+					write = true;
+					break;
+
+				case MUL:
+					inst_out.a1 = inst_out.a1 * inst_out.a2;
+					write = true;
+					break;
+
+				case DIV:
+					inst_out.a1 = inst_out.a1 / inst_out.a2;
+					write = true;
+					break;
+
+				case LD:
+					inst_out.a1 = ram->data[ inst_out.a1 ];
+					write = true;
+					break;
+
+				case LDI:
+					write = true;
+					break;
+
+				case BLEQ:
+					if ( inst_out.dest <= inst_out.a1 )
+					{
+						rf->pc += inst_out.a2 - 2;
+						proc->flush();
+					}
+					break;
+
+				case B:
+					rf->pc += inst_out.dest - 2;
+					proc->flush();
+					break;
+
+				case ST:
+				case STI:
+					ram->data[ inst_out.a1 ] = inst_out.dest;
+					break;
+			}
+			finished = true;
+
+			if( write == true )
+				return 0;
+			else
+				return 1;
+		}
 	}
 	return 0;
 }
@@ -209,6 +225,7 @@ void execute::push ()
 void execute::buffer_exec ( instruction i )
 {
 	halt = false;
+	wait = false;
 	inst_in = i;
 }
 
@@ -223,6 +240,7 @@ decode::decode ( register_file *rf_in, execute *e_in )
 void decode::flush ()
 {
 	halt = true;
+	wait = false;
 }
 
 void decode::buffer_dec ( instruction i )
@@ -240,86 +258,91 @@ void decode::fetch_operands ()
 	inst_out = inst_in;
 	if ( !halt )
 	{
-		switch( inst_out.op )
+		if ( exec->wait )
+			wait = true;
+		else
 		{
-			// two registers
-			case ADD:
-			case SUB:
-			case MUL:
-			case DIV:
-				if ( rf->dirty[ inst_out.a1 ] || rf->dirty[ inst_out.a2 ] )
-					wait = true;
-				else
-				{
-					inst_out.a1 = rf->r[ inst_out.a1 ];
-					inst_out.a2 = rf->r[ inst_out.a2 ];
+			switch( inst_out.op )
+			{
+				// two registers
+				case ADD:
+				case SUB:
+				case MUL:
+				case DIV:
+					if ( rf->dirty[ inst_out.a1 ] || rf->dirty[ inst_out.a2 ] )
+						wait = true;
+					else
+					{
+						inst_out.a1 = rf->r[ inst_out.a1 ];
+						inst_out.a2 = rf->r[ inst_out.a2 ];
+						rf->dirty[ inst_out.dest ] = true;
+						wait = false;
+					}
+					break;
+
+				case BLEQ:
+				case ST:
+					if ( rf->dirty[ inst_out.dest ] || rf->dirty[ inst_out.a1 ] )
+						wait = true;
+					else
+					{
+						inst_out.dest = rf->r[ inst_out.dest ];
+						inst_out.a1 = rf->r[ inst_out.a1 ];
+						wait = false;
+					}
+					break;
+
+				// one register
+				case ADDI:
+				case SUBI:
+					if ( rf->dirty[ inst_out.a1 ] )
+						wait = true;
+					else
+					{
+						inst_out.a1 = rf->r[ inst_out.a1 ];
+						rf->dirty[ inst_out.dest ] = true;
+						wait = false;
+					}
+					break;
+
+				case LD:
+					if ( rf->dirty[ inst_out.a1 ] )
+						wait = true;
+					else
+					{
+						inst_out.a1 = rf->r[ inst_out.a1 ];
+						rf->dirty[ inst_out.dest ] = true;
+						wait = false;
+					}
+					break;
+
+				case STI:
+					if ( rf->dirty[ inst_out.dest ] )
+						wait = true;
+					else
+					{
+						inst_out.dest = rf->r[ inst_out.dest ];
+						wait = false;
+					}
+					break;
+
+				// no registers
+				case LDI:
 					rf->dirty[ inst_out.dest ] = true;
 					wait = false;
-				}
-				break;
+					break;
 
-			case BLEQ:
-			case ST:
-				if ( rf->dirty[ inst_out.dest ] || rf->dirty[ inst_out.a1 ] )
-					wait = true;
-				else
-				{
-					inst_out.dest = rf->r[ inst_out.dest ];
-					inst_out.a1 = rf->r[ inst_out.a1 ];
+				default:
 					wait = false;
-				}
-				break;
-
-			// one register
-			case ADDI:
-			case SUBI:
-				if ( rf->dirty[ inst_out.a1 ] )
-					wait = true;
-				else
-				{
-					inst_out.a1 = rf->r[ inst_out.a1 ];
-					rf->dirty[ inst_out.dest ] = true;
-					wait = false;
-				}
-				break;
-
-			case LD:
-				if ( rf->dirty[ inst_out.a1 ] )
-					wait = true;
-				else
-				{
-					inst_out.a1 = rf->r[ inst_out.a1 ];
-					rf->dirty[ inst_out.dest ] = true;
-					wait = false;
-				}
-				break;
-
-			case STI:
-				if ( rf->dirty[ inst_out.dest ] )
-					wait = true;
-				else
-				{
-					inst_out.dest = rf->r[ inst_out.dest ];
-					wait = false;
-				}
-				break;
-
-			// no registers
-			case LDI:
-				rf->dirty[ inst_out.dest ] = true;
-				wait = false;
-				break;
-
-			default:
-				wait = false;
-				break;
+					break;
+			}
 		}
 	}
 }
 
 void decode::push ()
 {
-	if ( !wait && !halt )
+	if ( !wait && !halt && !exec->wait )
 	{
 		exec->buffer_exec( inst_out );
 		halt = true;

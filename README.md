@@ -20,7 +20,6 @@ NOP			// no opperation
 ```
 
 ## TODO
-* Change execution time to accurate for each instruction
 * Multiple execute units (2xALU, 1xLSU, 1xBU) w/ blocking issue
 * Branch prediction into the fetch unit (static etc)
 * Sub pipelining

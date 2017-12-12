@@ -64,11 +64,12 @@ class execute
 {
 public:
 	instruction inst_in, inst_out;
-	bool halt, write, finished;
+	bool halt, write, finished, wait;
 	processor *proc;
 	RAM *ram;
 	register_file *rf;
 	write_back *wb;
+	int rem_exec;
 
 	execute ( processor* proc_in, RAM *rp, register_file *rf_in, write_back *out );
 	void buffer_exec ( instruction i );
