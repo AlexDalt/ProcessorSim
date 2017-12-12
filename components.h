@@ -54,7 +54,7 @@ public:
 
 	write_back ( register_file *reg_pointer );
 	void buffer_write ( instruction inst );
-	void write ();
+	int write ();
 	void flush ();
 };
 

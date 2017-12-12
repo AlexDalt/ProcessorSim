@@ -103,14 +103,16 @@ void write_back::buffer_write ( instruction inst )
 	buffer.push_back ( inst );
 }
 
-void write_back::write ()
+int write_back::write ()
 {
 	if ( !buffer.empty() ){
 		instruction i = buffer.front();
 		buffer.pop_front();
 		rf->r[ i.dest ] = i.a1;
 		rf->dirty[ i.dest ] = false;
+		return 1;
 	}
+	return 0;
 }
 
 execute::execute( processor *proc_in, RAM *rp, register_file *rf_in, write_back *out )
@@ -184,7 +186,11 @@ int execute::exec ()
 				break;
 		}
 		finished = true;
-		return 1;
+		
+		if( write == true )
+			return 0;
+		else
+			return 1;
 	}
 	return 0;
 }
@@ -378,7 +384,7 @@ void processor::flush ()
 
 int processor::tick ()
 {
-	wb.write();
+	completed_instructions += wb.write();
 	completed_instructions += exec.exec();
 	d.fetch_operands();
 	f.fetch_instruction();
