@@ -9,7 +9,7 @@ using namespace std;
 #define NUM_ARCH_REG 8
 #define NUM_PHYS_REG 8
 #define NUM_ALU 1
-#define RES_SIZE 1
+#define RES_SIZE 4
 
 enum Operations { NOP, ADD, ADDI, SUB, SUBI, MUL, DIV, LD, LDI, BLEQ, B, ST, STI, PLACE_HOLDER };
 

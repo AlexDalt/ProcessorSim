@@ -266,10 +266,7 @@ reservation_station::reservation_station ( execute *exec_in, register_file *rf_i
 
 void reservation_station::buffer_inst ( instruction inst )
 {
-	if ( inst.d1 || inst.d2 )
-		wait_buffer.push_back( inst );
-	else
-		out_buffer.push_back( inst );
+	wait_buffer.push_back( inst );
 }
 
 void reservation_station::fetch_operands ()
@@ -529,7 +526,6 @@ void decode::push ()
 				break;
 			default:
 				break;
-
 		}
 	}
 }
