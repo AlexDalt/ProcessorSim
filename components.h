@@ -7,8 +7,9 @@
 using namespace std;
 
 #define NUM_ARCH_REG 8
-#define NUM_PHYS_REG 32
+#define NUM_PHYS_REG 8
 #define NUM_ALU 1
+#define RES_SIZE 4
 
 enum Operations { NOP, ADD, ADDI, SUB, SUBI, MUL, DIV, LD, LDI, BLEQ, B, ST, STI, PLACE_HOLDER };
 
@@ -16,10 +17,8 @@ class instruction
 {
 public:
 	Operations op;
-	int dest;
-	int a1;
-	int a2;
-	int num;
+	int dest, a1, a2, num;
+	bool d1, d2;
 
 	instruction( string inst="NOP", string d="", string b1="", string b2="" );
 };
@@ -50,9 +49,10 @@ class write_back
 {
 public:
 	register_file *rf;
+	RAM *ram;
 	deque <instruction> buffer;
 
-	write_back ( register_file *reg_pointer );
+	write_back ( register_file *reg_pointer, RAM* ram_in);
 	void insert_place_holder ( int inst_num );
 	void buffer_write ( instruction inst );
 	int write ();
@@ -72,10 +72,24 @@ public:
 	write_back *wb;
 	int rem_exec;
 
-	execute ( processor* proc_in, RAM *rp, register_file *rf_in, write_back *out );
+	execute ( processor *proc_in, RAM *rp, register_file *rf_in, write_back *out );
 	void buffer_exec ( instruction i );
 	void flush ( int num );
 	void exec ();
+	void push ();
+};
+
+class reservation_station
+{
+public:
+	deque<instruction> wait_buffer, out_buffer;
+	execute *exec;
+	register_file *rf;
+
+	reservation_station ( execute *exec_in, register_file *rf_in );
+	void buffer_inst ( instruction inst );
+	void fetch_operands ();
+	void flush ( int num );
 	void push ();
 };
 
@@ -83,11 +97,11 @@ class decode
 {
 public:
 	instruction inst_in, inst_out;
-	execute *exec;
+	reservation_station *rs;
 	register_file *rf;
 	bool wait, halt;
 
-	decode ( register_file *rf_in, execute *e_in );
+	decode ( register_file *rf_in, reservation_station *rs_in );
 	void buffer_dec ( instruction i );
 	void fetch_operands ();
 	void push ();
@@ -118,6 +132,7 @@ public:
 	register_file rf;
 	write_back wb;
 	execute exec;
+	reservation_station rs;
 	decode d;
 	fetch f;
 	int cycles;

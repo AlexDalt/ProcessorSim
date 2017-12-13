@@ -4,6 +4,8 @@ int exec_times[13] = { 1, 1, 1, 1, 1, 4, 20, 4, 1, 3, 2, 1, 1 };
 
 instruction::instruction ( string inst, string d, string b1, string b2 )
 {
+	d1 = false;
+	d2 = false;
 	if ( inst.compare ( "NOP" ) == 0 )
 		op = NOP;
 	else if ( inst.compare ( "ADD" ) == 0 )
@@ -90,9 +92,10 @@ register_file::register_file()
 	}
 }
 
-write_back::write_back ( register_file *reg_pointer )
+write_back::write_back ( register_file *reg_pointer, RAM *ram_in )
 {
 	rf = reg_pointer;
+	ram = ram_in;
 }
 
 void write_back::insert_place_holder ( int inst_num )
@@ -140,6 +143,9 @@ int write_back::write ()
 				rf->r[ i.dest ] = i.a1;
 				rf->dirty[ i.dest ] = false;
 				break;
+			case ST:
+			case STI:
+				ram->data[ i.a1 ] = i.dest;
 
 			default:
 				break;
@@ -210,20 +216,16 @@ void execute::exec ()
 				case BLEQ:
 					if ( inst_out.dest <= inst_out.a1 )
 					{
-						rf->pc += inst_out.a2 - 2;
+						rf->pc += inst_out.a2 - 3;
 						proc->flush( inst_out.num );
 					}
 					break;
 
 				case B:
-					rf->pc += inst_out.dest - 2;
+					rf->pc += inst_out.dest - 3;
 					proc->flush( inst_out.num );
 					break;
 
-				case ST:
-				case STI:
-					ram->data[ inst_out.a1 ] = inst_out.dest;
-					break;
 				default:
 					break;
 			}
@@ -256,10 +258,144 @@ void execute::buffer_exec ( instruction i )
 	inst_in = i;
 }
 
-decode::decode ( register_file *rf_in, execute *e_in )
+reservation_station::reservation_station ( execute *exec_in, register_file *rf_in )
 {
-	exec = e_in;
+	exec = exec_in;
 	rf = rf_in;
+}
+
+void reservation_station::buffer_inst ( instruction inst )
+{
+	if ( inst.d1 || inst.d2 )
+		wait_buffer.push_back( inst );
+	else
+		out_buffer.push_back( inst );
+}
+
+void reservation_station::fetch_operands ()
+{
+	for ( int i = 0; i < wait_buffer.size(); i++)
+	{
+		instruction inst = wait_buffer.front();
+		wait_buffer.pop_front();
+		switch( inst.op )
+		{
+			case ADD:
+			case ADDI:
+			case SUB:
+			case SUBI:
+			case MUL:
+			case DIV:
+			case LD:
+				if ( inst.d1 && !rf->dirty[ inst.a1 ] )
+				{
+					inst.a1 = rf->r[ inst.a1 ];
+					inst.d1 = false;
+				}
+				if ( inst.d2 && !rf->dirty[ inst.a2 ] )
+				{
+					inst.a2 = rf->r[ inst.a2 ];
+					inst.d2 = false;
+				}
+				break;
+
+			case BLEQ:
+			case ST:
+			case STI:
+				if ( inst.d1 && !rf->dirty[ inst.dest ] )
+				{
+					inst.dest = rf->r[ inst.dest ];
+					inst.d1 = false;
+				}
+				if ( inst.d2 && !rf->dirty[ inst.a1 ] )
+				{
+					inst.a1 = rf->r[ inst.a1 ];
+					inst.d2 = false;
+				}
+				break;
+
+			default:
+				break;
+		}
+
+		if ( !inst.d1 && !inst.d2 )
+		{
+			out_buffer.push_back( inst );
+			switch( inst.op )
+			{
+				case ADD:
+				case ADDI:
+				case SUB:
+				case SUBI:
+				case MUL:
+				case DIV:
+				case LD:
+				case LDI:
+					rf->dirty[ inst.dest ] = true;
+					break;
+				default:
+					break;
+			}
+		}
+		else
+			wait_buffer.push_back( inst );
+	}
+}
+
+void reservation_station::flush ( int num )
+{
+	instruction inst;
+	for( int i = 0; i < wait_buffer.size(); i++ )
+	{
+		inst = wait_buffer.front();
+		wait_buffer.pop_front();
+		if ( inst.num <= num )
+			wait_buffer.push_back( inst );
+	}
+
+	for( int i = 0; i < out_buffer.size(); i++ )
+	{
+		inst = out_buffer.front();
+		out_buffer.pop_front();
+		if ( inst.num <= num )
+			out_buffer.push_back( inst );
+		else
+		{
+			switch( inst.op )
+			{
+				case ADD:
+				case ADDI:
+				case SUB:
+				case SUBI:
+				case MUL:
+				case DIV:
+				case LD:
+				case LDI:
+					rf->dirty[ inst.dest ] = false;
+					break;
+				default:
+					break;
+			}
+		}
+	}
+}
+
+void reservation_station::push ()
+{
+	if ( !out_buffer.empty() && !exec->wait )
+	{
+		instruction inst = out_buffer.front();
+		out_buffer.pop_front();
+		exec->buffer_exec( inst );
+
+		
+	}
+}
+
+decode::decode ( register_file *rf_in, reservation_station *rs_in )
+{
+	rf = rf_in;
+	rs = rs_in;
 	halt = true;
 	wait = false;
 }
@@ -270,6 +406,21 @@ void decode::flush ( int num )
 	{
 		halt = true;
 		wait = false;
+		switch( inst_out.op )
+		{
+			case ADD:
+			case ADDI:
+			case SUB:
+			case SUBI:
+			case MUL:
+			case DIV:
+			case LD:
+			case LDI:
+				rf->dirty[ inst_out.dest ] = false;
+				break;
+			default:
+				break;
+		}
 	}
 }
 
@@ -288,94 +439,98 @@ void decode::fetch_operands ()
 	inst_out = inst_in;
 	if ( !halt )
 	{
-		if ( exec->wait )
-			wait = true;
-		else
+		switch( inst_out.op )
 		{
-			switch( inst_out.op )
-			{
-				// two registers
-				case ADD:
-				case SUB:
-				case MUL:
-				case DIV:
-					if ( rf->dirty[ inst_out.a1 ] || rf->dirty[ inst_out.a2 ] )
-						wait = true;
-					else
-					{
-						inst_out.a1 = rf->r[ inst_out.a1 ];
-						inst_out.a2 = rf->r[ inst_out.a2 ];
-						rf->dirty[ inst_out.dest ] = true;
-						wait = false;
-					}
-					break;
+			// two registers
+			case ADD:
+			case SUB:
+			case MUL:
+			case DIV:
+				if ( !rf->dirty[ inst_out.a1 ] )
+					inst_out.a1 = rf->r[ inst_out.a1 ];
+				else
+					inst_out.d1 = true;
 
-				case BLEQ:
-				case ST:
-					if ( rf->dirty[ inst_out.dest ] || rf->dirty[ inst_out.a1 ] )
-						wait = true;
-					else
-					{
-						inst_out.dest = rf->r[ inst_out.dest ];
-						inst_out.a1 = rf->r[ inst_out.a1 ];
-						wait = false;
-					}
-					break;
+				if ( !rf->dirty[ inst_out.a2 ] )
+					inst_out.a2 = rf->r[ inst_out.a2 ];
+				else
+					inst_out.d2 = true;
 
-				// one register
-				case ADDI:
-				case SUBI:
-					if ( rf->dirty[ inst_out.a1 ] )
-						wait = true;
-					else
-					{
-						inst_out.a1 = rf->r[ inst_out.a1 ];
-						rf->dirty[ inst_out.dest ] = true;
-						wait = false;
-					}
-					break;
+				break;
 
-				case LD:
-					if ( rf->dirty[ inst_out.a1 ] )
-						wait = true;
-					else
-					{
-						inst_out.a1 = rf->r[ inst_out.a1 ];
-						rf->dirty[ inst_out.dest ] = true;
-						wait = false;
-					}
-					break;
+			case BLEQ:
+			case ST:
+				if ( !rf->dirty[ inst_out.dest ] )
+					inst_out.dest = rf->r[ inst_out.dest ];
+				else
+					inst_out.d1 = true;
 
-				case STI:
-					if ( rf->dirty[ inst_out.dest ] )
-						wait = true;
-					else
-					{
-						inst_out.dest = rf->r[ inst_out.dest ];
-						wait = false;
-					}
-					break;
+				if ( !rf->dirty[ inst_out.a1 ] )
+					inst_out.a1 = rf->r[ inst_out.a1 ];
+				else
+					inst_out.d2 = true;
 
-				// no registers
-				case LDI:
-					rf->dirty[ inst_out.dest ] = true;
-					wait = false;
-					break;
+				break;
 
-				default:
-					wait = false;
-					break;
-			}
+			// one register
+			case ADDI:
+			case SUBI:
+				if ( !rf->dirty[ inst_out.a1 ] )
+					inst_out.a1 = rf->r[ inst_out.a1 ];
+				else
+					inst_out.d1 = true;
+
+				break;
+
+			case LD:
+				if ( !rf->dirty[ inst_out.a1 ] )
+					inst_out.a1 = rf->r[ inst_out.a1 ];
+				else
+					inst_out.d1 = true;
+
+				break;
+
+			case STI:
+				if ( !rf->dirty[ inst_out.dest ] )
+					inst_out.dest = rf->r[ inst_out.dest ];
+				else
+					inst_out.d1 = true;
+
+				break;
+
+			default:
+				break;
 		}
+		
 	}
 }
 
 void decode::push ()
 {
-	if ( !wait && !halt && !exec->wait )
+	if ( rs->wait_buffer.size() + rs->out_buffer.size() >= RES_SIZE )
+		wait = true;
+	else
+		wait = false;
+	if ( !wait && !halt )
 	{
-		exec->buffer_exec( inst_out );
+		rs->buffer_inst( inst_out );
 		halt = true;
+		switch ( inst_out.op )
+		{
+			case ADD:
+			case ADDI:
+			case SUB:
+			case SUBI:
+			case MUL:
+			case DIV:
+			case LD:
+			case LDI:
+				rf->dirty[ inst_out.dest ] = true;
+				break;
+			default:
+				break;
+
+		}
 	}
 }
 
@@ -419,9 +574,10 @@ void fetch::push ()
 
 processor::processor ( int code, int data, RAM *rp )
 	: ram ( rp )
-	, wb ( &rf )
+	, wb ( &rf, rp )
 	, exec ( this, rp, &rf , &wb )
-	, d ( &rf, &exec )
+	, rs ( &exec, &rf )
+	, d ( &rf, &rs )
 	, f ( rp, &rf, &d, &wb )
 {
 	cycles = 0;
@@ -434,14 +590,19 @@ void processor::flush ( int num )
 {
 	f.flush( num );
 	d.flush( num );
+	rs.flush( num );
 	exec.flush( num );
 	wb.flush( num );
+
+	for( int i = 0; i < NUM_PHYS_REG; i++ )
+		rf.dirty[ i ] = false;
 }
 
 int processor::tick ()
 {
 	completed_instructions += wb.write();
 	exec.exec();
+	rs.fetch_operands();
 	d.fetch_operands();
 	f.fetch_instruction();
 
@@ -451,6 +612,7 @@ int processor::tick ()
 int processor::tock ()
 {
 	exec.push();
+	rs.push();
 	d.push();
 	f.push();
 
