@@ -10,7 +10,7 @@ using namespace std;
 #define NUM_PHYS_REG 32
 #define NUM_ALU 1
 
-enum Operations { NOP, ADD, ADDI, SUB, SUBI, MUL, DIV, LD, LDI, BLEQ, B, ST, STI };
+enum Operations { NOP, ADD, ADDI, SUB, SUBI, MUL, DIV, LD, LDI, BLEQ, B, ST, STI, PLACE_HOLDER };
 
 class instruction
 {
@@ -53,9 +53,10 @@ public:
 	deque <instruction> buffer;
 
 	write_back ( register_file *reg_pointer );
+	void insert_place_holder ( int inst_num );
 	void buffer_write ( instruction inst );
 	int write ();
-	void flush ();
+	void flush ( int num );
 };
 
 class processor;
@@ -64,7 +65,7 @@ class execute
 {
 public:
 	instruction inst_in, inst_out;
-	bool halt, write, finished, wait;
+	bool halt, finished, wait;
 	processor *proc;
 	RAM *ram;
 	register_file *rf;
@@ -73,7 +74,8 @@ public:
 
 	execute ( processor* proc_in, RAM *rp, register_file *rf_in, write_back *out );
 	void buffer_exec ( instruction i );
-	int exec ();
+	void flush ( int num );
+	void exec ();
 	void push ();
 };
 
@@ -89,7 +91,7 @@ public:
 	void buffer_dec ( instruction i );
 	void fetch_operands ();
 	void push ();
-	void flush ();
+	void flush ( int num );
 };
 
 class fetch
@@ -98,14 +100,15 @@ public:
 	instruction inst;
 	RAM *ram;
 	decode *d;
+	write_back *wb;
 	register_file *rf;
 	bool halt;
 	int inst_count;
 
-	fetch ( RAM *rp, register_file *rf_in, decode *d_in );
+	fetch ( RAM *rp, register_file *rf_in, decode *d_in, write_back *wb_in );
 	void fetch_instruction ();
 	void push ();
-	void flush ();
+	void flush ( int num );
 };
 
 class processor
@@ -124,7 +127,7 @@ public:
 	float inst_per_cycle;
 
 	processor ( int code, int data, RAM *rp );
-	void flush ();
+	void flush ( int num );
 	int tick ();
 	int tock ();
 };

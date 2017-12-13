@@ -103,6 +103,8 @@ void refresh_program( WINDOW* win )
 			case STI:
 				mvwprintw( win, i+1, 1, "%2d: STI r%d %d", i, inst.dest, inst.a1 );
 				break;
+			default:
+				break;
 		}
 	}
 	box( win, 0, 0 );
@@ -178,12 +180,12 @@ void refresh_fetch( WINDOW *win )
 		case STI:
 			mvwprintw( win, y, (maxx - 8)/2, "%d: STI r%d %d", inst.num, inst.dest, inst.a1 );
 			break;
+		default:
+			break;
 	}
 	mvwprintw( win, maxy-2, (maxx - 6)/2, "halt=%d", proc->f.halt );
 	box( win, 0, 0 );
 	mvwprintw( win, 0, (maxx - 5)/2, "fetch" );
-	mvwprintw( win, maxy-1, (maxx - 1)/2, "|" );
-	mvwprintw( win, maxy/2, maxx-1, "<" );
 	wrefresh( win );
 }
 
@@ -194,7 +196,6 @@ void refresh_bp( WINDOW *win )
 	werase( win );
 	box( win, 0, 0 );
 	mvwprintw( win, 0, (maxx - 16)/2, "branch predictor" );
-	mvwprintw( win, maxy/2, 0, "-" );
 	wrefresh( win );
 }
 
@@ -250,13 +251,14 @@ void refresh_decode( WINDOW *win )
 			case STI:
 				mvwprintw( win, y, (maxx - 8)/2, "%d: STI r%d %d", inst.num, inst.dest, inst.a1 );
 				break;
+			default:
+				break;
 		}
 	}
 
 	mvwprintw( win, maxy-2, (maxx - 6)/2, "halt=%d", proc->d.wait );
 	box( win, 0, 0 );
 	mvwprintw( win, 0, (maxx-6)/2, "decode" );
-	mvwprintw( win, 0, (maxx-2)/4, "V" );
 	wrefresh( win );
 }
 
@@ -310,6 +312,8 @@ void refresh_exec( WINDOW *win )
 			case STI:
 				mvwprintw( win, y, (maxx - 8)/2, "%d: STI %d %d", inst.num, inst.dest, inst.a1 );
 				break;
+			default:
+				break;
 		}
 	}
 	mvwprintw( win, maxy-2, (maxx - 6)/2, "halt=%d", proc->exec.halt );
@@ -331,31 +335,46 @@ void refresh_wb( WINDOW *win )
 		switch ( inst.op )
 		{
 			case NOP:
-				mvwprintw( win, i+1, (maxx-3)/2, "%d: NOP");
+				mvwprintw( win, i+1, 2, "%d: NOP", inst.num );
 				break;
 			case ADD:
-				mvwprintw( win, i+1, x, "%d: ADD r%d %d", inst.num, inst.dest, inst.a1, inst.a2 );
+				mvwprintw( win, i+1, 2, "%d: ADD r%d %d", inst.num, inst.dest, inst.a1, inst.a2 );
 				break;
 			case ADDI:
-				mvwprintw( win, i+1, x, "%d: ADDI r%d %d", inst.num, inst.dest, inst.a1, inst.a2 );
+				mvwprintw( win, i+1, 2, "%d: ADDI r%d %d", inst.num, inst.dest, inst.a1, inst.a2 );
 				break;
 			case SUB:
-				mvwprintw( win, i+1, x, "%d: SUB r%d %d", inst.num, inst.dest, inst.a1, inst.a2);
+				mvwprintw( win, i+1, 2, "%d: SUB r%d %d", inst.num, inst.dest, inst.a1, inst.a2 );
 				break;
 			case SUBI:
-				mvwprintw( win, i+1, x, "%d: SUBI r%d %d", inst.num, inst.dest, inst.a1, inst.a2);
+				mvwprintw( win, i+1, 2, "%d: SUBI r%d %d", inst.num, inst.dest, inst.a1, inst.a2 );
 				break;
 			case MUL:
-				mvwprintw( win, i+1, x, "%d: MUL r%d %d", inst.num, inst.dest, inst.a1, inst.a2);
+				mvwprintw( win, i+1, 2, "%d: MUL r%d %d", inst.num, inst.dest, inst.a1, inst.a2 );
 				break;
 			case DIV:
-				mvwprintw( win, i+1, x, "%d: DIV  r%d %d", inst.num, inst.dest, inst.a1, inst.a2);
+				mvwprintw( win, i+1, 2, "%d: DIV  r%d %d", inst.num, inst.dest, inst.a1, inst.a2 );
 				break;
 			case LD:
-				mvwprintw( win, i+1, (maxx - 7)/2, "%d: LD r%d %d", inst.num, inst.dest, inst.a1 );
+				mvwprintw( win, i+1, 2, "%d: LD r%d %d", inst.num, inst.dest, inst.a1 );
 				break;
 			case LDI:
-				mvwprintw( win, i+1, (maxx - 8)/2, "%d: LDI r%d %d", inst.num, inst.dest, inst.a1 );
+				mvwprintw( win, i+1, 2, "%d: LDI r%d %d", inst.num, inst.dest, inst.a1 );
+				break;
+			case BLEQ:
+				mvwprintw( win, i+1, 2, "%d: BLEQ", inst.num );
+				break;
+			case B:
+				mvwprintw( win, i+1, 2, "%d: B", inst.num );
+				break;
+			case ST:
+				mvwprintw( win, i+1, 2, "%d: ST", inst.num );
+				break;
+			case STI:
+				mvwprintw( win, i+1, 2, "%d: STI", inst.num );
+				break;
+			case PLACE_HOLDER:
+				mvwprintw( win, i+1, 2, "%d: ", inst.num );
 				break;
 			default:
 				break;
@@ -363,7 +382,7 @@ void refresh_wb( WINDOW *win )
 	}
 	mvwprintw( win, maxy - 2, (maxx - 6)/2, "halt=%d", (proc->wb.buffer.size() == 0) );
 	box( win, 0, 0 );
-	mvwprintw( win, 0, (maxx - 10)/2, "write back" );
+	mvwprintw( win, 0, (maxx - 14)/2, "reorder buffer" );
 	wrefresh( win );
 }
 
@@ -371,7 +390,7 @@ void refresh_help( WINDOW *win )
 {
 	werase( win );
 	box( win, 0, 0 );
-	mvwprintw( win, 1, (COLS - 72)/2, "<anything> - Step execition, <r> - run until finish, <x> - exit");
+	mvwprintw( win, 1, (COLS - 72)/2, "<anything> - step execition, <r> - run until finish, <x> - exit");
 	mvwprintw( win, 2, (COLS - 82)/2, "completed instructions: %d, completed cycles: %d, instructions/cycle: %.3f", proc->completed_instructions, proc->cycles, proc->inst_per_cycle );
 	wrefresh( win );
 }

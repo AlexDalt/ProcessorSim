@@ -95,26 +95,58 @@ write_back::write_back ( register_file *reg_pointer )
 	rf = reg_pointer;
 }
 
-void write_back::flush ()
+void write_back::insert_place_holder ( int inst_num )
 {
-	buffer.empty();
+	instruction i;
+	i.num = inst_num;
+	i.op = PLACE_HOLDER;
+	buffer.push_back( i );
+}
+
+void write_back::flush ( int num )
+{
+	while( buffer.back().num > num )
+		buffer.pop_back();
 }
 
 void write_back::buffer_write ( instruction inst )
 {
-	buffer.push_back ( inst );
+	int i = 0;
+	while( buffer[ i ].num != inst.num )
+		i++;
+
+	buffer[ i ].op = inst.op;
+	buffer[ i ].dest = inst.dest;
+	buffer[ i ].a1 = inst.a1;
 }
 
 int write_back::write ()
 {
-	if ( !buffer.empty() ){
+	int comp = 0;
+	while( !buffer.empty() && buffer[ 0 ].op != PLACE_HOLDER )
+	{
 		instruction i = buffer.front();
 		buffer.pop_front();
-		rf->r[ i.dest ] = i.a1;
-		rf->dirty[ i.dest ] = false;
-		return 1;
+		switch ( i.op )
+		{
+			case ADD:
+			case ADDI:
+			case SUB:
+			case SUBI:
+			case MUL:
+			case DIV:
+			case LD:
+			case LDI:
+				rf->r[ i.dest ] = i.a1;
+				rf->dirty[ i.dest ] = false;
+				break;
+
+			default:
+				break;
+		}
+		comp++;
 	}
-	return 0;
+	return comp;
 }
 
 execute::execute( processor *proc_in, RAM *rp, register_file *rf_in, write_back *out )
@@ -128,9 +160,8 @@ execute::execute( processor *proc_in, RAM *rp, register_file *rf_in, write_back 
 	finished = true;
 }
 
-int execute::exec ()
+void execute::exec ()
 {
-	write = false;
 	finished = false;
 	if ( !halt ){
 		inst_out = inst_in;
@@ -154,70 +185,66 @@ int execute::exec ()
 				case ADD:
 				case ADDI:
 					inst_out.a1 = inst_out.a1 + inst_out.a2;
-					write = true;
 					break;
 
 				case SUB:
 				case SUBI:
 					inst_out.a1 = inst_out.a1 - inst_out.a2;
-					write = true;
 					break;
 
 				case MUL:
 					inst_out.a1 = inst_out.a1 * inst_out.a2;
-					write = true;
 					break;
 
 				case DIV:
 					inst_out.a1 = inst_out.a1 / inst_out.a2;
-					write = true;
 					break;
 
 				case LD:
 					inst_out.a1 = ram->data[ inst_out.a1 ];
-					write = true;
 					break;
 
 				case LDI:
-					write = true;
 					break;
 
 				case BLEQ:
 					if ( inst_out.dest <= inst_out.a1 )
 					{
 						rf->pc += inst_out.a2 - 2;
-						proc->flush();
+						proc->flush( inst_out.num );
 					}
 					break;
 
 				case B:
 					rf->pc += inst_out.dest - 2;
-					proc->flush();
+					proc->flush( inst_out.num );
 					break;
 
 				case ST:
 				case STI:
 					ram->data[ inst_out.a1 ] = inst_out.dest;
 					break;
+				default:
+					break;
 			}
 			finished = true;
-
-			if( write == true )
-				return 0;
-			else
-				return 1;
 		}
 	}
-	return 0;
 }
 
 void execute::push ()
 {
 	if ( finished && !halt )
 	{
-		if( write )
-			wb->buffer_write ( inst_out );
-		write = false;
+		wb->buffer_write ( inst_out );
+		halt = true;
+	}
+}
+
+void execute::flush ( int num )
+{
+	if( inst_in.num > num )
+	{
 		halt = true;
 	}
 }
@@ -237,10 +264,13 @@ decode::decode ( register_file *rf_in, execute *e_in )
 	wait = false;
 }
 
-void decode::flush ()
+void decode::flush ( int num )
 {
-	halt = true;
-	wait = false;
+	if ( inst_out.num > num )
+	{
+		halt = true;
+		wait = false;
+	}
 }
 
 void decode::buffer_dec ( instruction i )
@@ -349,16 +379,17 @@ void decode::push ()
 	}
 }
 
-fetch::fetch( RAM *rp, register_file *rf_in, decode *d_in )
+fetch::fetch( RAM *rp, register_file *rf_in, decode *d_in, write_back *wb_in )
 {
 	ram = rp;
 	rf = rf_in;
+	wb = wb_in;
 	d = d_in;
 	halt = false;
 	inst_count = 0;
 }
 
-void fetch::flush ()
+void fetch::flush ( int num )
 {
 	halt = false;
 }
@@ -370,6 +401,7 @@ void fetch::fetch_instruction ()
 		inst = ram->code[ rf->pc ];
 		inst.num = inst_count;
 		inst_count++;
+		wb->insert_place_holder( inst.num );
 	}
 }
 
@@ -390,7 +422,7 @@ processor::processor ( int code, int data, RAM *rp )
 	, wb ( &rf )
 	, exec ( this, rp, &rf , &wb )
 	, d ( &rf, &exec )
-	, f ( rp, &rf, &d )
+	, f ( rp, &rf, &d, &wb )
 {
 	cycles = 0;
 	num_code = code;
@@ -398,17 +430,18 @@ processor::processor ( int code, int data, RAM *rp )
 	completed_instructions = 0;
 }
 
-void processor::flush ()
+void processor::flush ( int num )
 {
-	f.flush();
-	d.flush();
-	wb.flush();
+	f.flush( num );
+	d.flush( num );
+	exec.flush( num );
+	wb.flush( num );
 }
 
 int processor::tick ()
 {
 	completed_instructions += wb.write();
-	completed_instructions += exec.exec();
+	exec.exec();
 	d.fetch_operands();
 	f.fetch_instruction();
 

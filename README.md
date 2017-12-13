@@ -25,7 +25,6 @@ NOP			// no opperation
 * Sub pipelining
 * Reservation stations
 * Extend branch prediction mechanism
-* Reorder buffer
 * Avoid dependancies
 * Register renaming (with support for dynamic cross-allocation eg trivial functions 0/1)
 * Execution unit that supports vector instructions
