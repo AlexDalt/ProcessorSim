@@ -133,8 +133,15 @@ void refresh_reg_file( WINDOW *win )
 void refresh_fetch( WINDOW *win )
 {
 	int maxx, maxy;
-	instruction inst = ram->code[ proc->rf.pc ];
-	inst.num = proc->f.inst_count;
+	instruction inst;
+	if( !proc->f.halt )
+	{
+		inst = ram->code[ proc->rf.pc ];
+		inst.num = proc->f.inst_count;
+	}
+	else
+		inst = proc->f.inst;
+
 	getmaxyx( win, maxy, maxx );
 	werase( win );
 	switch ( inst.op )
