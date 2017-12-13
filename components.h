@@ -17,7 +17,7 @@ class instruction
 {
 public:
 	Operations op;
-	int dest, a1, a2, num;
+	int dest, a1, a2, num, pc;
 	bool d1, d2;
 
 	instruction( string inst="NOP", string d="", string b1="", string b2="" );

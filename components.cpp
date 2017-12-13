@@ -216,13 +216,13 @@ void execute::exec ()
 				case BLEQ:
 					if ( inst_out.dest <= inst_out.a1 )
 					{
-						rf->pc += inst_out.a2 - 3;
+						rf->pc = inst_out.pc + inst_out.a2;
 						proc->flush( inst_out.num );
 					}
 					break;
 
 				case B:
-					rf->pc += inst_out.dest - 3;
+					rf->pc = inst_out.pc + inst_out.dest;
 					proc->flush( inst_out.num );
 					break;
 
@@ -555,6 +555,7 @@ void fetch::fetch_instruction ()
 	{
 		inst = ram->code[ rf->pc ];
 		inst.num = inst_count;
+		inst.pc = rf->pc;
 		inst_count++;
 		wb->insert_place_holder( inst.num );
 	}
