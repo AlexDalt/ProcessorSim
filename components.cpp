@@ -310,17 +310,18 @@ void reservation_station::buffer_inst ( instruction inst )
 
 void reservation_station::fetch_operands ()
 {
-	int max = wait_buffer.size() + out_buffer.size();
 	instruction inst;
+	deque<instruction> wait_copy;
+	deque<instruction> out_copy;
 
 	sort( out_buffer.begin(), out_buffer.end(), sort_inst );
 	sort( wait_buffer.begin(), wait_buffer.end(), sort_inst );
 
 	int min_num = 0;
 
-	for ( int i = 0; i < max; i++)
+	while( !out_buffer.empty() || !wait_buffer.empty() )
 	{
-		if ( out_buffer.size() == 0 || min_num >= out_buffer.front().num || wait_buffer.front().num < out_buffer.front().num )
+		if ( out_buffer.size() == 0 || (wait_buffer.size() > 0 && wait_buffer.front().num < out_buffer.front().num ) )
 		{
 			inst = wait_buffer.front();
 			wait_buffer.pop_front();
@@ -370,7 +371,7 @@ void reservation_station::fetch_operands ()
 					break;
 			}
 
-			wait_buffer.push_back( inst );
+			wait_copy.push_back( inst );
 			min_num = inst.num;
 		}
 		else
@@ -394,10 +395,12 @@ void reservation_station::fetch_operands ()
 					break;
 			}
 
-			out_buffer.push_back( inst );
+			out_copy.push_back( inst );
 			min_num = inst.num;
 		}
 	}
+	out_buffer = out_copy;
+	wait_buffer = wait_copy;
 }
 
 void reservation_station::flush ( int num )
