@@ -3,6 +3,7 @@
 #include <iostream>
 #include <sstream>
 #include <deque>
+#include <algorithm>
 
 using namespace std;
 

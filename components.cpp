@@ -126,11 +126,12 @@ void write_back::buffer_write ( instruction inst )
 int write_back::write ()
 {
 	int comp = 0;
+	instruction inst;
 	while( !buffer.empty() && buffer[ 0 ].op != PLACE_HOLDER )
 	{
-		instruction i = buffer.front();
+		inst = buffer.front();
 		buffer.pop_front();
-		switch ( i.op )
+		switch ( inst.op )
 		{
 			case ADD:
 			case ADDI:
@@ -140,17 +141,43 @@ int write_back::write ()
 			case DIV:
 			case LD:
 			case LDI:
-				rf->r[ i.dest ] = i.a1;
-				rf->dirty[ i.dest ] = false;
+				rf->r[ inst.dest ] = inst.a1;
+				rf->dirty[ inst.dest ] = false;
 				break;
 			case ST:
 			case STI:
-				ram->data[ i.a1 ] = i.dest;
+				ram->data[ inst.a1 ] = inst.dest;
+				break;
 
 			default:
 				break;
 		}
 		comp++;
+	}
+
+	int max = buffer.size();
+
+	for( int i = 0; i < max; i++ )
+	{
+		inst = buffer[ i ];
+		if( !(inst.op == PLACE_HOLDER) )
+		{
+			switch( inst.op )
+			{
+				case ADD:
+				case ADDI:
+				case SUB:
+				case SUBI:
+				case MUL:
+				case DIV:
+				case LD:
+				case LDI:
+					rf->dirty[ inst.dest ] = true;
+					break;
+				default:
+					break;
+			}
+		}
 	}
 	return comp;
 }
@@ -191,26 +218,32 @@ void execute::exec ()
 				case ADD:
 				case ADDI:
 					inst_out.a1 = inst_out.a1 + inst_out.a2;
+					rf->dirty[ inst_out.dest ] = true;
 					break;
 
 				case SUB:
 				case SUBI:
 					inst_out.a1 = inst_out.a1 - inst_out.a2;
+					rf->dirty[ inst_out.dest ] = true;
 					break;
 
 				case MUL:
 					inst_out.a1 = inst_out.a1 * inst_out.a2;
+					rf->dirty[ inst_out.dest ] = true;
 					break;
 
 				case DIV:
 					inst_out.a1 = inst_out.a1 / inst_out.a2;
+					rf->dirty[ inst_out.dest ] = true;
 					break;
 
 				case LD:
 					inst_out.a1 = ram->data[ inst_out.a1 ];
+					rf->dirty[ inst_out.dest ] = true;
 					break;
 
 				case LDI:
+					rf->dirty[ inst_out.dest ] = true;
 					break;
 
 				case BLEQ:
@@ -264,60 +297,87 @@ reservation_station::reservation_station ( execute *exec_in, register_file *rf_i
 	rf = rf_in;
 }
 
+bool sort_inst ( instruction i1, instruction i2 )
+{
+	return ( i1.num < i2.num );
+}
+
 void reservation_station::buffer_inst ( instruction inst )
 {
 	wait_buffer.push_back( inst );
+	sort( wait_buffer.begin(), wait_buffer.end(), sort_inst );
 }
 
 void reservation_station::fetch_operands ()
 {
-	for ( int i = 0; i < wait_buffer.size(); i++)
+	int max = wait_buffer.size() + out_buffer.size();
+	instruction inst;
+
+	sort( out_buffer.begin(), out_buffer.end(), sort_inst );
+	sort( wait_buffer.begin(), wait_buffer.end(), sort_inst );
+
+	int min_num = 0;
+
+	for ( int i = 0; i < max; i++)
 	{
-		instruction inst = wait_buffer.front();
-		wait_buffer.pop_front();
-		switch( inst.op )
+		if ( out_buffer.size() == 0 || min_num >= out_buffer.front().num || wait_buffer.front().num < out_buffer.front().num )
 		{
-			case ADD:
-			case ADDI:
-			case SUB:
-			case SUBI:
-			case MUL:
-			case DIV:
-			case LD:
-				if ( inst.d1 && !rf->dirty[ inst.a1 ] )
-				{
-					inst.a1 = rf->r[ inst.a1 ];
-					inst.d1 = false;
-				}
-				if ( inst.d2 && !rf->dirty[ inst.a2 ] )
-				{
-					inst.a2 = rf->r[ inst.a2 ];
-					inst.d2 = false;
-				}
-				break;
+			inst = wait_buffer.front();
+			wait_buffer.pop_front();
 
-			case BLEQ:
-			case ST:
-			case STI:
-				if ( inst.d1 && !rf->dirty[ inst.dest ] )
-				{
-					inst.dest = rf->r[ inst.dest ];
-					inst.d1 = false;
-				}
-				if ( inst.d2 && !rf->dirty[ inst.a1 ] )
-				{
-					inst.a1 = rf->r[ inst.a1 ];
-					inst.d2 = false;
-				}
-				break;
+			switch( inst.op )
+			{
+				case ADD:
+				case ADDI:
+				case SUB:
+				case SUBI:
+				case MUL:
+				case DIV:
+				case LD:
+					if ( inst.d1 && !rf->dirty[ inst.a1 ] )
+					{
+						inst.a1 = rf->r[ inst.a1 ];
+						inst.d1 = false;
+					}
+					if ( inst.d2 && !rf->dirty[ inst.a2 ] )
+					{
+						inst.a2 = rf->r[ inst.a2 ];
+						inst.d2 = false;
+					}
+					rf->dirty[ inst.dest ] = true;
+					break;
 
-			default:
-				break;
+				case LDI:
+					rf->dirty[ inst.dest ] = true;
+					break;
+
+				case BLEQ:
+				case ST:
+				case STI:
+					if ( inst.d1 && !rf->dirty[ inst.dest ] )
+					{
+						inst.dest = rf->r[ inst.dest ];
+						inst.d1 = false;
+					}
+					if ( inst.d2 && !rf->dirty[ inst.a1 ] )
+					{
+						inst.a1 = rf->r[ inst.a1 ];
+						inst.d2 = false;
+					}
+					break;
+
+				default:
+					break;
+			}
+
+			wait_buffer.push_back( inst );
+			min_num = inst.num;
 		}
-
-		if ( !inst.d1 && !inst.d2 )
+		else
 		{
-			out_buffer.push_back( inst );
+			inst = out_buffer.front();
+			out_buffer.pop_front();
+
 			switch( inst.op )
 			{
 				case ADD:
@@ -333,16 +393,19 @@ void reservation_station::fetch_operands ()
 				default:
 					break;
 			}
+
+			out_buffer.push_back( inst );
+			min_num = inst.num;
 		}
-		else
-			wait_buffer.push_back( inst );
 	}
 }
 
 void reservation_station::flush ( int num )
 {
 	instruction inst;
-	for( int i = 0; i < wait_buffer.size(); i++ )
+	int max = wait_buffer.size();
+
+	for( int i = 0; i < max; i++ )
 	{
 		inst = wait_buffer.front();
 		wait_buffer.pop_front();
@@ -350,7 +413,9 @@ void reservation_station::flush ( int num )
 			wait_buffer.push_back( inst );
 	}
 
-	for( int i = 0; i < out_buffer.size(); i++ )
+	max = out_buffer.size();
+
+	for( int i = 0; i < max; i++ )
 	{
 		inst = out_buffer.front();
 		out_buffer.pop_front();
@@ -375,17 +440,33 @@ void reservation_station::flush ( int num )
 			}
 		}
 	}
+
+	sort( out_buffer.begin(), out_buffer.end(), sort_inst );
+	sort( wait_buffer.begin(), wait_buffer.end(), sort_inst );
 }
 
 void reservation_station::push ()
 {
+	sort( out_buffer.begin(), out_buffer.end(), sort_inst );
+	sort( wait_buffer.begin(), wait_buffer.end(), sort_inst );
+
 	if ( !out_buffer.empty() && !exec->wait )
 	{
 		instruction inst = out_buffer.front();
 		out_buffer.pop_front();
 		exec->buffer_exec( inst );
+	}
 
-		
+	int max = wait_buffer.size();
+	instruction inst;
+	for ( int i = 0; i < max; i++ )
+	{
+		inst = wait_buffer.front();
+		wait_buffer.pop_front();
+		if ( !inst.d1 && !inst.d2 )
+			out_buffer.push_back( inst );
+		else
+			wait_buffer.push_back( inst );
 	}
 }
 
@@ -444,61 +525,70 @@ void decode::fetch_operands ()
 			case MUL:
 			case DIV:
 				if ( !rf->dirty[ inst_out.a1 ] )
+				{
 					inst_out.a1 = rf->r[ inst_out.a1 ];
+					inst_out.d1 = false;
+				}
 				else
 					inst_out.d1 = true;
 
 				if ( !rf->dirty[ inst_out.a2 ] )
+				{
 					inst_out.a2 = rf->r[ inst_out.a2 ];
+					inst_out.d2 = false;
+				}
 				else
 					inst_out.d2 = true;
-
+				rf->dirty[ inst_out.dest ] = true;
 				break;
 
 			case BLEQ:
 			case ST:
 				if ( !rf->dirty[ inst_out.dest ] )
+				{
 					inst_out.dest = rf->r[ inst_out.dest ];
+					inst_out.d1 = false;
+				}
 				else
 					inst_out.d1 = true;
 
 				if ( !rf->dirty[ inst_out.a1 ] )
+				{
 					inst_out.a1 = rf->r[ inst_out.a1 ];
+					inst_out.d2 = false;
+				}
 				else
 					inst_out.d2 = true;
-
 				break;
 
-			// one register
+				// one register
 			case ADDI:
 			case SUBI:
-				if ( !rf->dirty[ inst_out.a1 ] )
-					inst_out.a1 = rf->r[ inst_out.a1 ];
-				else
-					inst_out.d1 = true;
-
-				break;
-
 			case LD:
 				if ( !rf->dirty[ inst_out.a1 ] )
+				{
 					inst_out.a1 = rf->r[ inst_out.a1 ];
+					inst_out.d1 = false;
+				}
 				else
 					inst_out.d1 = true;
-
+				rf->dirty[ inst_out.dest ] = true;
+				inst_out.d2 = false;
 				break;
 
 			case STI:
 				if ( !rf->dirty[ inst_out.dest ] )
+				{
 					inst_out.dest = rf->r[ inst_out.dest ];
+					inst_out.d1 = false;
+				}
 				else
 					inst_out.d1 = true;
-
 				break;
 
 			default:
 				break;
 		}
-		
 	}
 }
 
@@ -512,21 +602,6 @@ void decode::push ()
 	{
 		rs->buffer_inst( inst_out );
 		halt = true;
-		switch ( inst_out.op )
-		{
-			case ADD:
-			case ADDI:
-			case SUB:
-			case SUBI:
-			case MUL:
-			case DIV:
-			case LD:
-			case LDI:
-				rf->dirty[ inst_out.dest ] = true;
-				break;
-			default:
-				break;
-		}
 	}
 }
 

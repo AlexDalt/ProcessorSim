@@ -147,43 +147,43 @@ void refresh_fetch( WINDOW *win )
 	switch ( inst.op )
 	{
 		case NOP:
-			mvwprintw( win, 2, 2, "%d: NOP", inst.num);
+			mvwprintw( win, 1, 2, "%d: NOP", inst.num);
 			break;
 		case ADD:
-			mvwprintw( win, 2, 2, "%d: ADD r%d r%d r%d", inst.num, inst.dest, inst.a1, inst.a2 );
+			mvwprintw( win, 1, 2, "%d: ADD r%d r%d r%d", inst.num, inst.dest, inst.a1, inst.a2 );
 			break;
 		case ADDI:
-			mvwprintw( win, 2, 2, "%d: ADDI r%d r%d %d", inst.num, inst.dest, inst.a1, inst.a2 );
+			mvwprintw( win, 1, 2, "%d: ADDI r%d r%d %d", inst.num, inst.dest, inst.a1, inst.a2 );
 			break;
 		case SUB:
-			mvwprintw( win, 2, 2, "%d: SUB r%d r%d r%d", inst.num, inst.dest, inst.a1, inst.a2);
+			mvwprintw( win, 1, 2, "%d: SUB r%d r%d r%d", inst.num, inst.dest, inst.a1, inst.a2);
 			break;
 		case SUBI:
-			mvwprintw( win, 2, 2, "%d: SUBI r%d r%d %d", inst.num, inst.dest, inst.a1, inst.a2);
+			mvwprintw( win, 1, 2, "%d: SUBI r%d r%d %d", inst.num, inst.dest, inst.a1, inst.a2);
 			break;
 		case MUL:
-			mvwprintw( win, 2, 2, "%d: MUL r%d r%d r%d", inst.num, inst.dest, inst.a1, inst.a2);
+			mvwprintw( win, 1, 2, "%d: MUL r%d r%d r%d", inst.num, inst.dest, inst.a1, inst.a2);
 			break;
 		case DIV:
-			mvwprintw( win, 2, 2, "%d: DIV  r%d r%d r%d", inst.num, inst.dest, inst.a1, inst.a2);
+			mvwprintw( win, 1, 2, "%d: DIV  r%d r%d r%d", inst.num, inst.dest, inst.a1, inst.a2);
 			break;
 		case LD:
-			mvwprintw( win, 2, 2, "%d: LD r%d r%d", inst.num, inst.dest, inst.a1 );
+			mvwprintw( win, 1, 2, "%d: LD r%d r%d", inst.num, inst.dest, inst.a1 );
 			break;
 		case LDI:
-			mvwprintw( win, 2, 2, "%d: LDI r%d %d", inst.num, inst.dest, inst.a1 );
+			mvwprintw( win, 1, 2, "%d: LDI r%d %d", inst.num, inst.dest, inst.a1 );
 			break;
 		case BLEQ:
-			mvwprintw( win, 2, 2, "%d: BLEQ r%d r%d %d", inst.num, inst.dest, inst.a1, inst.a2);
+			mvwprintw( win, 1, 2, "%d: BLEQ r%d r%d %d", inst.num, inst.dest, inst.a1, inst.a2);
 			break;
 		case B:
-			mvwprintw( win, 2, 2, "%d: B %d", inst.num, inst.dest );
+			mvwprintw( win, 1, 2, "%d: B %d", inst.num, inst.dest );
 			break;
 		case ST:
-			mvwprintw( win, 2, 2, "%d: ST r%d r%d", inst.num, inst.dest, inst.a1 );
+			mvwprintw( win, 1, 2, "%d: ST r%d r%d", inst.num, inst.dest, inst.a1 );
 			break;
 		case STI:
-			mvwprintw( win, 2, 2, "%d: STI r%d %d", inst.num, inst.dest, inst.a1 );
+			mvwprintw( win, 1, 2, "%d: STI r%d %d", inst.num, inst.dest, inst.a1 );
 			break;
 		default:
 			break;
@@ -216,43 +216,43 @@ void refresh_decode( WINDOW *win )
 		switch ( inst.op )
 		{
 			case NOP:
-				mvwprintw( win, 2, 2, "%d: NOP");
+				mvwprintw( win, 1, 2, "%d: NOP");
 				break;
 			case ADD:
-				mvwprintw( win, 2, 2, "%d: ADD r%d r%d r%d", inst.num, inst.dest, inst.a1, inst.a2 );
+				mvwprintw( win, 1, 2, "%d: ADD r%d r%d r%d", inst.num, inst.dest, inst.a1, inst.a2 );
 				break;
 			case ADDI:
-				mvwprintw( win, 2, 2, "%d: ADDI r%d r%d %d", inst.num, inst.dest, inst.a1, inst.a2 );
+				mvwprintw( win, 1, 2, "%d: ADDI r%d r%d %d", inst.num, inst.dest, inst.a1, inst.a2 );
 				break;
 			case SUB:
-				mvwprintw( win, 2, 2, "%d: SUB r%d r%d r%d", inst.num, inst.dest, inst.a1, inst.a2);
+				mvwprintw( win, 1, 2, "%d: SUB r%d r%d r%d", inst.num, inst.dest, inst.a1, inst.a2);
 				break;
 			case SUBI:
-				mvwprintw( win, 2, 2, "%d: SUBI r%d r%d %d", inst.num, inst.dest, inst.a1, inst.a2);
+				mvwprintw( win, 1, 2, "%d: SUBI r%d r%d %d", inst.num, inst.dest, inst.a1, inst.a2);
 				break;
 			case MUL:
-				mvwprintw( win, 2, 2, "%d: MUL r%d r%d r%d", inst.num, inst.dest, inst.a1, inst.a2);
+				mvwprintw( win, 1, 2, "%d: MUL r%d r%d r%d", inst.num, inst.dest, inst.a1, inst.a2);
 				break;
 			case DIV:
-				mvwprintw( win, 2, 2, "%d: DIV  r%d r%d r%d", inst.num, inst.dest, inst.a1, inst.a2);
+				mvwprintw( win, 1, 2, "%d: DIV  r%d r%d r%d", inst.num, inst.dest, inst.a1, inst.a2);
 				break;
 			case LD:
-				mvwprintw( win, 2, 2, "%d: LD r%d r%d", inst.num, inst.dest, inst.a1 );
+				mvwprintw( win, 1, 2, "%d: LD r%d r%d", inst.num, inst.dest, inst.a1 );
 				break;
 			case LDI:
-				mvwprintw( win, 2, 2, "%d: LDI r%d %d", inst.num, inst.dest, inst.a1 );
+				mvwprintw( win, 1, 2, "%d: LDI r%d %d", inst.num, inst.dest, inst.a1 );
 				break;
 			case BLEQ:
-				mvwprintw( win, 2, 2, "%d: BLEQ r%d r%d %d", inst.num, inst.dest, inst.a1, inst.a2);
+				mvwprintw( win, 1, 2, "%d: BLEQ r%d r%d %d", inst.num, inst.dest, inst.a1, inst.a2);
 				break;
 			case B:
-				mvwprintw( win, 2, 2, "%d: B %d", inst.num, inst.dest );
+				mvwprintw( win, 1, 2, "%d: B %d", inst.num, inst.dest );
 				break;
 			case ST:
-				mvwprintw( win, 2, 2, "%d: ST r%d r%d", inst.num, inst.dest, inst.a1 );
+				mvwprintw( win, 1, 2, "%d: ST r%d r%d", inst.num, inst.dest, inst.a1 );
 				break;
 			case STI:
-				mvwprintw( win, 2, 2, "%d: STI r%d %d", inst.num, inst.dest, inst.a1 );
+				mvwprintw( win, 1, 2, "%d: STI r%d %d", inst.num, inst.dest, inst.a1 );
 				break;
 			default:
 				break;
@@ -275,43 +275,43 @@ void refresh_exec( WINDOW *win )
 		switch ( inst.op )
 		{
 			case NOP:
-				mvwprintw( win, 2, 2, "%d: NOP", inst.num);
+				mvwprintw( win, 1, 2, "%d: NOP", inst.num);
 				break;
 			case ADD:
-				mvwprintw( win, 2, 2, "%d: ADD r%d %d %d", inst.num, inst.dest, inst.a1, inst.a2 );
+				mvwprintw( win, 1, 2, "%d: ADD r%d %d %d", inst.num, inst.dest, inst.a1, inst.a2 );
 				break;
 			case ADDI:
-				mvwprintw( win, 2, 2, "%d: ADDI r%d %d %d", inst.num, inst.dest, inst.a1, inst.a2 );
+				mvwprintw( win, 1, 2, "%d: ADDI r%d %d %d", inst.num, inst.dest, inst.a1, inst.a2 );
 				break;
 			case SUB:
-				mvwprintw( win, 2, 2, "%d: SUB r%d %d %d", inst.num, inst.dest, inst.a1, inst.a2);
+				mvwprintw( win, 1, 2, "%d: SUB r%d %d %d", inst.num, inst.dest, inst.a1, inst.a2);
 				break;
 			case SUBI:
-				mvwprintw( win, 2, 2, "%d: SUBI r%d %d %d", inst.num, inst.dest, inst.a1, inst.a2);
+				mvwprintw( win, 1, 2, "%d: SUBI r%d %d %d", inst.num, inst.dest, inst.a1, inst.a2);
 				break;
 			case MUL:
-				mvwprintw( win, 2, 2, "%d: MUL r%d %d %d", inst.num, inst.dest, inst.a1, inst.a2);
+				mvwprintw( win, 1, 2, "%d: MUL r%d %d %d", inst.num, inst.dest, inst.a1, inst.a2);
 				break;
 			case DIV:
-				mvwprintw( win, 2, 2, "%d: DIV r%d %d %d", inst.num, inst.dest, inst.a1, inst.a2);
+				mvwprintw( win, 1, 2, "%d: DIV r%d %d %d", inst.num, inst.dest, inst.a1, inst.a2);
 				break;
 			case LD:
-				mvwprintw( win, 2, 2, "%d: LD r%d %d", inst.num, inst.dest, inst.a1 );
+				mvwprintw( win, 1, 2, "%d: LD r%d %d", inst.num, inst.dest, inst.a1 );
 				break;
 			case LDI:
-				mvwprintw( win, 2, 2, "%d: LDI r%d %d", inst.num, inst.dest, inst.a1 );
+				mvwprintw( win, 1, 2, "%d: LDI r%d %d", inst.num, inst.dest, inst.a1 );
 				break;
 			case BLEQ:
-				mvwprintw( win, 2, 2, "%d: BLEQ %d %d %d", inst.num, inst.dest, inst.a1, inst.a2);
+				mvwprintw( win, 1, 2, "%d: BLEQ %d %d %d", inst.num, inst.dest, inst.a1, inst.a2);
 				break;
 			case B:
-				mvwprintw( win, 2, 2, "%d: B %d", inst.num, inst.dest );
+				mvwprintw( win, 1, 2, "%d: B %d", inst.num, inst.dest );
 				break;
 			case ST:
-				mvwprintw( win, 2, 2, "%d: ST %d %d", inst.num, inst.dest, inst.a1 );
+				mvwprintw( win, 1, 2, "%d: ST %d %d", inst.num, inst.dest, inst.a1 );
 				break;
 			case STI:
-				mvwprintw( win, 2, 2, "%d: STI %d %d", inst.num, inst.dest, inst.a1 );
+				mvwprintw( win, 1, 2, "%d: STI %d %d", inst.num, inst.dest, inst.a1 );
 				break;
 			default:
 				break;
@@ -336,43 +336,43 @@ void refresh_rs( WINDOW *win )
 		switch ( inst.op )
 		{
 			case NOP:
-				mvwprintw( win, i+2, x, "%d: NOP", inst.num);
+				mvwprintw( win, i+1, x, "%d: NOP", inst.num);
 				break;
 			case ADD:
-				mvwprintw( win, i+2, x, "%d: ADD r%d %d %d", inst.num, inst.dest, inst.a1, inst.a2 );
+				mvwprintw( win, i+1, x, "%d: ADD r%d %d %d", inst.num, inst.dest, inst.a1, inst.a2 );
 				break;
 			case ADDI:
-				mvwprintw( win, i+2, x, "%d: ADDI r%d %d %d", inst.num, inst.dest, inst.a1, inst.a2 );
+				mvwprintw( win, i+1, x, "%d: ADDI r%d %d %d", inst.num, inst.dest, inst.a1, inst.a2 );
 				break;
 			case SUB:
-				mvwprintw( win, i+2, x, "%d: SUB r%d %d %d", inst.num, inst.dest, inst.a1, inst.a2);
+				mvwprintw( win, i+1, x, "%d: SUB r%d %d %d", inst.num, inst.dest, inst.a1, inst.a2);
 				break;
 			case SUBI:
-				mvwprintw( win, i+2, x, "%d: SUBI r%d %d %d", inst.num, inst.dest, inst.a1, inst.a2);
+				mvwprintw( win, i+1, x, "%d: SUBI r%d %d %d", inst.num, inst.dest, inst.a1, inst.a2);
 				break;
 			case MUL:
-				mvwprintw( win, i+2, x, "%d: MUL r%d %d %d", inst.num, inst.dest, inst.a1, inst.a2);
+				mvwprintw( win, i+1, x, "%d: MUL r%d %d %d", inst.num, inst.dest, inst.a1, inst.a2);
 				break;
 			case DIV:
-				mvwprintw( win, i+2, x, "%d: DIV r%d %d %d", inst.num, inst.dest, inst.a1, inst.a2);
+				mvwprintw( win, i+1, x, "%d: DIV r%d %d %d", inst.num, inst.dest, inst.a1, inst.a2);
 				break;
 			case LD:
-				mvwprintw( win, i+2, x, "%d: LD r%d %d", inst.num, inst.dest, inst.a1 );
+				mvwprintw( win, i+1, x, "%d: LD r%d %d - %d, %d", inst.num, inst.dest, inst.a1, inst.d1, inst.d2 );
 				break;
 			case LDI:
-				mvwprintw( win, i+2, x, "%d: LDI r%d %d", inst.num, inst.dest, inst.a1 );
+				mvwprintw( win, i+1, x, "%d: LDI r%d %d", inst.num, inst.dest, inst.a1 );
 				break;
 			case BLEQ:
-				mvwprintw( win, i+2, x, "%d: BLEQ %d %d %d", inst.num, inst.dest, inst.a1, inst.a2);
+				mvwprintw( win, i+1, x, "%d: BLEQ %d %d %d", inst.num, inst.dest, inst.a1, inst.a2);
 				break;
 			case B:
-				mvwprintw( win, i+2, x, "%d: B %d", inst.num, inst.dest );
+				mvwprintw( win, i+1, x, "%d: B %d", inst.num, inst.dest );
 				break;
 			case ST:
-				mvwprintw( win, i+2, x, "%d: ST %d %d", inst.num, inst.dest, inst.a1 );
+				mvwprintw( win, i+1, x, "%d: ST %d %d", inst.num, inst.dest, inst.a1 );
 				break;
 			case STI:
-				mvwprintw( win, i+2, x, "%d: STI %d %d", inst.num, inst.dest, inst.a1 );
+				mvwprintw( win, i+1, x, "%d: STI %d %d", inst.num, inst.dest, inst.a1 );
 				break;
 			default:
 				break;
@@ -388,43 +388,43 @@ void refresh_rs( WINDOW *win )
 		switch ( inst.op )
 		{
 			case NOP:
-				mvwprintw( win, i+2, x, "%d: NOP", inst.num);
+				mvwprintw( win, i+1, x, "%d: NOP", inst.num);
 				break;
 			case ADD:
-				mvwprintw( win, i+2, x, "%d: ADD r%d %d %d", inst.num, inst.dest, inst.a1, inst.a2 );
+				mvwprintw( win, i+1, x, "%d: ADD r%d %d %d", inst.num, inst.dest, inst.a1, inst.a2 );
 				break;
 			case ADDI:
-				mvwprintw( win, i+2, x, "%d: ADDI r%d %d %d", inst.num, inst.dest, inst.a1, inst.a2 );
+				mvwprintw( win, i+1, x, "%d: ADDI r%d %d %d", inst.num, inst.dest, inst.a1, inst.a2 );
 				break;
 			case SUB:
-				mvwprintw( win, i+2, x, "%d: SUB r%d %d %d", inst.num, inst.dest, inst.a1, inst.a2);
+				mvwprintw( win, i+1, x, "%d: SUB r%d %d %d", inst.num, inst.dest, inst.a1, inst.a2);
 				break;
 			case SUBI:
-				mvwprintw( win, i+2, x, "%d: SUBI r%d %d %d", inst.num, inst.dest, inst.a1, inst.a2);
+				mvwprintw( win, i+1, x, "%d: SUBI r%d %d %d", inst.num, inst.dest, inst.a1, inst.a2);
 				break;
 			case MUL:
-				mvwprintw( win, i+2, x, "%d: MUL r%d %d %d", inst.num, inst.dest, inst.a1, inst.a2);
+				mvwprintw( win, i+1, x, "%d: MUL r%d %d %d", inst.num, inst.dest, inst.a1, inst.a2);
 				break;
 			case DIV:
-				mvwprintw( win, i+2, x, "%d: DIV r%d %d %d", inst.num, inst.dest, inst.a1, inst.a2);
+				mvwprintw( win, i+1, x, "%d: DIV r%d %d %d", inst.num, inst.dest, inst.a1, inst.a2);
 				break;
 			case LD:
-				mvwprintw( win, i+2, x, "%d: LD r%d %d", inst.num, inst.dest, inst.a1 );
+				mvwprintw( win, i+1, x, "%d: LD r%d %d", inst.num, inst.dest, inst.a1 );
 				break;
 			case LDI:
-				mvwprintw( win, i+2, x, "%d: LDI r%d %d", inst.num, inst.dest, inst.a1 );
+				mvwprintw( win, i+1, x, "%d: LDI r%d %d", inst.num, inst.dest, inst.a1 );
 				break;
 			case BLEQ:
-				mvwprintw( win, i+2, x, "%d: BLEQ %d %d %d", inst.num, inst.dest, inst.a1, inst.a2);
+				mvwprintw( win, i+1, x, "%d: BLEQ %d %d %d", inst.num, inst.dest, inst.a1, inst.a2);
 				break;
 			case B:
-				mvwprintw( win, i+2, x, "%d: B %d", inst.num, inst.dest );
+				mvwprintw( win, i+1, x, "%d: B %d", inst.num, inst.dest );
 				break;
 			case ST:
-				mvwprintw( win, i+2, x, "%d: ST %d %d", inst.num, inst.dest, inst.a1 );
+				mvwprintw( win, i+1, x, "%d: ST %d %d", inst.num, inst.dest, inst.a1 );
 				break;
 			case STI:
-				mvwprintw( win, i+2, x, "%d: STI %d %d", inst.num, inst.dest, inst.a1 );
+				mvwprintw( win, i+1, x, "%d: STI %d %d", inst.num, inst.dest, inst.a1 );
 				break;
 			default:
 				break;
@@ -543,7 +543,7 @@ void init_ncurses()
 
 	fetch_win = create_subwin( proc_win, (proc_win_h - 2)/5, (proc_win_w - (proc_win_w-2)/5 - 2)/2, 2, ram_win_w + 1);
 
-	bp_win = create_subwin( proc_win, (proc_win_h - 2)/5, (proc_win_w - (proc_win_w-2)/5 - 2)/2, 2, ram_win_w + 2 + (proc_win_w - (proc_win_w-2)/5 - 2)/2 );
+	bp_win = create_subwin( proc_win, (proc_win_h - 2)/5, (proc_win_w - (proc_win_w-2)/5 - 2)/2, 2, ram_win_w + 1 + (proc_win_w - (proc_win_w-2)/5 - 2)/2 );
 
 	decode_win = create_subwin( proc_win, (proc_win_h - 2)/5, proc_win_w - (proc_win_w-2)/5 - 2, (proc_win_h - 2)/5 + 2, ram_win_w + 1);
 
