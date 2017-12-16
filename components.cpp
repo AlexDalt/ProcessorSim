@@ -349,7 +349,21 @@ void reservation_station::fetch_operands ()
 		{
 			inst = out_buffer.front();
 			out_buffer.pop_front();
-
+			switch( inst.op )
+			{
+				case ADD:
+				case ADDI:
+				case SUB:
+				case SUBI:
+				case MUL:
+				case DIV:
+				case LD:
+				case LDI:
+					rf->dirty[ inst.dest ] = true;
+					break;
+				default:
+					break;
+			}
 			out_copy.push_back( inst );
 			min_num = inst.num;
 		}
@@ -439,9 +453,9 @@ void decode::buffer_dec ( instruction i )
 
 void decode::fetch_operands ()
 {
-	inst_out = inst_in;
-	if ( !halt )
+	if ( !halt && !wait )
 	{
+		inst_out = inst_in;
 		switch( inst_out.op )
 		{
 			// two registers
@@ -641,8 +655,8 @@ void processor::refresh_db ()
 int processor::tick ()
 {
 	completed_instructions += wb.write();
-	rs.fetch_operands();
 	exec.exec();
+	rs.fetch_operands();
 	d.fetch_operands();
 	f.fetch_instruction();
 
