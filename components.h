@@ -56,7 +56,6 @@ public:
 	write_back ( register_file *reg_pointer, RAM* ram_in);
 	void insert_place_holder ( int inst_num );
 	void buffer_write ( instruction inst );
-	void check ( int num );
 	int write ();
 	void flush ( int num );
 };
@@ -87,9 +86,9 @@ public:
 	deque<instruction> wait_buffer, out_buffer;
 	execute *exec[ NUM_ALU ];
 	register_file *rf;
-	write_back *wb;
+	processor *proc;
 
-	reservation_station ( write_back *wb_in, execute exec_in[ NUM_ALU ], register_file *rf_in );
+	reservation_station ( processor *proc_in, execute exec_in[ NUM_ALU ], register_file *rf_in );
 	void buffer_inst ( instruction inst );
 	void fetch_operands ();
 	void flush ( int num );
@@ -146,6 +145,7 @@ public:
 
 	processor ( int code, int data, RAM *rp );
 	void flush ( int num );
+	void check ( int num );
 	void refresh_db ();
 	int tick ();
 	int tock ();
