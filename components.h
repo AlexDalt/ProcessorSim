@@ -144,6 +144,7 @@ public:
 
 	processor ( int code, int data, RAM *rp );
 	void flush ( int num );
+	void refresh_db ();
 	int tick ();
 	int tock ();
 };

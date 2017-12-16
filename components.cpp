@@ -155,30 +155,6 @@ int write_back::write ()
 		comp++;
 	}
 
-	int max = buffer.size();
-
-	for( int i = 0; i < max; i++ )
-	{
-		inst = buffer[ i ];
-		if( !(inst.op == PLACE_HOLDER) )
-		{
-			switch( inst.op )
-			{
-				case ADD:
-				case ADDI:
-				case SUB:
-				case SUBI:
-				case MUL:
-				case DIV:
-				case LD:
-				case LDI:
-					rf->dirty[ inst.dest ] = true;
-					break;
-				default:
-					break;
-			}
-		}
-	}
 	return comp;
 }
 
@@ -218,32 +194,26 @@ void execute::exec ()
 				case ADD:
 				case ADDI:
 					inst_out.a1 = inst_out.a1 + inst_out.a2;
-					rf->dirty[ inst_out.dest ] = true;
 					break;
 
 				case SUB:
 				case SUBI:
 					inst_out.a1 = inst_out.a1 - inst_out.a2;
-					rf->dirty[ inst_out.dest ] = true;
 					break;
 
 				case MUL:
 					inst_out.a1 = inst_out.a1 * inst_out.a2;
-					rf->dirty[ inst_out.dest ] = true;
 					break;
 
 				case DIV:
 					inst_out.a1 = inst_out.a1 / inst_out.a2;
-					rf->dirty[ inst_out.dest ] = true;
 					break;
 
 				case LD:
 					inst_out.a1 = ram->data[ inst_out.a1 ];
-					rf->dirty[ inst_out.dest ] = true;
 					break;
 
 				case LDI:
-					rf->dirty[ inst_out.dest ] = true;
 					break;
 
 				case BLEQ:
@@ -281,6 +251,7 @@ void execute::flush ( int num )
 	if( inst_in.num > num )
 	{
 		halt = true;
+		wait = false;
 	}
 }
 
@@ -379,22 +350,6 @@ void reservation_station::fetch_operands ()
 			inst = out_buffer.front();
 			out_buffer.pop_front();
 
-			switch( inst.op )
-			{
-				case ADD:
-				case ADDI:
-				case SUB:
-				case SUBI:
-				case MUL:
-				case DIV:
-				case LD:
-				case LDI:
-					rf->dirty[ inst.dest ] = true;
-					break;
-				default:
-					break;
-			}
-
 			out_copy.push_back( inst );
 			min_num = inst.num;
 		}
@@ -424,24 +379,6 @@ void reservation_station::flush ( int num )
 		out_buffer.pop_front();
 		if ( inst.num <= num )
 			out_buffer.push_back( inst );
-		else
-		{
-			switch( inst.op )
-			{
-				case ADD:
-				case ADDI:
-				case SUB:
-				case SUBI:
-				case MUL:
-				case DIV:
-				case LD:
-				case LDI:
-					rf->dirty[ inst.dest ] = false;
-					break;
-				default:
-					break;
-			}
-		}
 	}
 
 	sort( out_buffer.begin(), out_buffer.end(), sort_inst );
@@ -487,21 +424,6 @@ void decode::flush ( int num )
 	{
 		halt = true;
 		wait = false;
-		switch( inst_out.op )
-		{
-			case ADD:
-			case ADDI:
-			case SUB:
-			case SUBI:
-			case MUL:
-			case DIV:
-			case LD:
-			case LDI:
-				rf->dirty[ inst_out.dest ] = false;
-				break;
-			default:
-				break;
-		}
 	}
 }
 
@@ -577,6 +499,10 @@ void decode::fetch_operands ()
 					inst_out.d1 = true;
 				rf->dirty[ inst_out.dest ] = true;
 				inst_out.d2 = false;
+				break;
+
+			case LDI:
+				rf->dirty[ inst_out.dest ] = true;
 				break;
 
 			case STI:
@@ -669,15 +595,54 @@ void processor::flush ( int num )
 	exec.flush( num );
 	wb.flush( num );
 
-	for( int i = 0; i < NUM_PHYS_REG; i++ )
+	refresh_db();
+}
+
+void processor::refresh_db ()
+{
+	int i;
+	deque<instruction> insts;
+
+	for ( i = 0; i < NUM_ARCH_REG; i++ )
 		rf.dirty[ i ] = false;
+
+	for ( i = 0; i < wb.buffer.size(); i++ )
+		insts.push_back( wb.buffer[ i ] );
+
+	insts.push_back( exec.inst_out );
+
+	for ( i = 0; i < rs.wait_buffer.size(); i++ )
+		insts.push_back( rs.wait_buffer[ i ] );
+	for ( i = 0; i < rs.out_buffer.size(); i++ )
+		insts.push_back( rs.out_buffer[ i ] );
+
+	sort( insts.begin(), insts.end(), sort_inst );
+
+	for ( i = 0; i < insts.size(); i++ )
+	{
+		switch( insts[ i ].op )
+		{
+			case ADD:
+			case ADDI:
+			case SUB:
+			case SUBI:
+			case MUL:
+			case DIV:
+			case LD:
+			case LDI:
+				rf.dirty[ insts[ i ].dest ] = true;
+				break;
+			default:
+				break;
+		}
+	}
 }
 
 int processor::tick ()
 {
 	completed_instructions += wb.write();
-	exec.exec();
 	rs.fetch_operands();
+	exec.exec();
 	d.fetch_operands();
 	f.fetch_instruction();
 

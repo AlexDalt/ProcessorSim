@@ -357,7 +357,7 @@ void refresh_rs( WINDOW *win )
 				mvwprintw( win, i+1, x, "%d: DIV r%d %d %d", inst.num, inst.dest, inst.a1, inst.a2);
 				break;
 			case LD:
-				mvwprintw( win, i+1, x, "%d: LD r%d %d - %d, %d", inst.num, inst.dest, inst.a1, inst.d1, inst.d2 );
+				mvwprintw( win, i+1, x, "%d: LD r%d %d", inst.num, inst.dest, inst.a1 );
 				break;
 			case LDI:
 				mvwprintw( win, i+1, x, "%d: LDI r%d %d", inst.num, inst.dest, inst.a1 );
