@@ -4,7 +4,8 @@
 int row, col;
 RAM *ram;
 processor *proc;
-WINDOW *ram_win, *proc_win, *help_win, *data_win, *program_win, *rf_win, *fetch_win, *decode_win, *exec_win, *wb_win, *bp_win, *rs_win;
+WINDOW *exec_win[ NUM_ALU ];
+WINDOW *ram_win, *proc_win, *help_win, *data_win, *program_win, *rf_win, *fetch_win, *decode_win, *wb_win, *bp_win, *rs_win;
 
 WINDOW *create_win( int height, int width, int starty, int startx )
 {
@@ -265,13 +266,13 @@ void refresh_decode( WINDOW *win )
 	wrefresh( win );
 }
 
-void refresh_exec( WINDOW *win )
+void refresh_exec( WINDOW *win, int num )
 {
 	int maxx, maxy;
-	instruction inst = proc->exec.inst_in;
+	instruction inst = proc->exec[ num ].inst_in;
 	getmaxyx( win, maxy, maxx );
 	werase( win );
-	if( !(proc->exec.halt) ){
+	if( !(proc->exec[ num ].halt) ){
 		switch ( inst.op )
 		{
 			case NOP:
@@ -317,7 +318,7 @@ void refresh_exec( WINDOW *win )
 				break;
 		}
 	}
-	mvwprintw( win, maxy-2, (maxx - 6)/2, "halt=%d", proc->exec.halt );
+	mvwprintw( win, maxy-2, (maxx - 6)/2, "halt=%d", proc->exec[ num ].halt );
 	box( win, 0, 0 );
 	mvwprintw( win, 0, (maxx - 3)/2, "ALU" );
 	wrefresh( win );
@@ -549,7 +550,10 @@ void init_ncurses()
 
 	rs_win = create_subwin( proc_win, (proc_win_h - 2)/5, proc_win_w - (proc_win_w-2)/5 - 2, 2*(proc_win_h - 2)/5 + 2, ram_win_w + 1);
 
-	exec_win = create_subwin( proc_win, (proc_win_h - 2)/5, proc_win_w - (proc_win_w-2)/5 - 2, 3*(proc_win_h - 2)/5 + 2, ram_win_w + 1 );
+	for ( int i = 0; i < NUM_ALU; i++ )
+		exec_win[ i ] = create_subwin( proc_win, (proc_win_h - 2)/5, (proc_win_w - (proc_win_w-2)/5 - 2)/NUM_ALU, 3*(proc_win_h - 2)/5 + 2, ram_win_w + 1 + i*(proc_win_w - (proc_win_w-2)/5 - 2)/NUM_ALU );
+
+	//exec_win = create_subwin( proc_win, (proc_win_h - 2)/5, proc_win_w - (proc_win_w-2)/5 - 2, 3*(proc_win_h - 2)/5 + 2, ram_win_w + 1 );
 
 	wb_win = create_subwin( proc_win, (proc_win_h - 2)/5, proc_win_w - (proc_win_w-2)/5 - 2, 4*(proc_win_h - 2)/5 + 2, ram_win_w + 1 );
 
@@ -570,7 +574,8 @@ void redraw()
 	refresh_fetch( fetch_win );
 	refresh_decode( decode_win );
 	refresh_rs( rs_win );
-	refresh_exec( exec_win );
+	for ( int i = 0; i < NUM_ALU; i++ )
+		refresh_exec( exec_win[ i ], i );
 	refresh_wb( wb_win );
 	refresh_help( help_win );
 	refresh_bp( bp_win );

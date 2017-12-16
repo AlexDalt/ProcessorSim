@@ -9,7 +9,7 @@ using namespace std;
 
 #define NUM_ARCH_REG 8
 #define NUM_PHYS_REG 8
-#define NUM_ALU 1
+#define NUM_ALU 2
 #define RES_SIZE 4
 
 enum Operations { NOP, ADD, ADDI, SUB, SUBI, MUL, DIV, LD, LDI, BLEQ, B, ST, STI, PLACE_HOLDER };
@@ -73,7 +73,7 @@ public:
 	write_back *wb;
 	int rem_exec;
 
-	execute ( processor *proc_in, RAM *rp, register_file *rf_in, write_back *out );
+	execute ( processor *proc_in=NULL, RAM *rp=NULL, register_file *rf_in=NULL, write_back *out=NULL );
 	void buffer_exec ( instruction i );
 	void flush ( int num );
 	void exec ();
@@ -84,10 +84,10 @@ class reservation_station
 {
 public:
 	deque<instruction> wait_buffer, out_buffer;
-	execute *exec;
+	execute *exec[ NUM_ALU ];
 	register_file *rf;
 
-	reservation_station ( execute *exec_in, register_file *rf_in );
+	reservation_station ( execute exec_in[ NUM_ALU ], register_file *rf_in );
 	void buffer_inst ( instruction inst );
 	void fetch_operands ();
 	void flush ( int num );
@@ -132,7 +132,7 @@ public:
 	RAM *ram;
 	register_file rf;
 	write_back wb;
-	execute exec;
+	execute exec[ NUM_ALU ];
 	reservation_station rs;
 	decode d;
 	fetch f;

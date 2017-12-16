@@ -264,7 +264,8 @@ void execute::buffer_exec ( instruction i )
 
 reservation_station::reservation_station ( execute *exec_in, register_file *rf_in )
 {
-	exec = exec_in;
+	for ( int i = 0; i < NUM_ALU; i++ )
+		exec[ i ] = &exec_in[ i ];
 	rf = rf_in;
 }
 
@@ -404,11 +405,14 @@ void reservation_station::push ()
 	sort( out_buffer.begin(), out_buffer.end(), sort_inst );
 	sort( wait_buffer.begin(), wait_buffer.end(), sort_inst );
 
-	if ( !out_buffer.empty() && !exec->wait )
+	for ( int i = 0; i < NUM_ALU; i++ )
 	{
-		instruction inst = out_buffer.front();
-		out_buffer.pop_front();
-		exec->buffer_exec( inst );
+		if ( !out_buffer.empty() && !exec[ i ]->wait )
+		{
+			instruction inst = out_buffer.front();
+			out_buffer.pop_front();
+			exec[ i ]->buffer_exec( inst );
+		}
 	}
 
 	int max = wait_buffer.size();
@@ -590,11 +594,12 @@ void fetch::push ()
 processor::processor ( int code, int data, RAM *rp )
 	: ram ( rp )
 	, wb ( &rf, rp )
-	, exec ( this, rp, &rf , &wb )
-	, rs ( &exec, &rf )
+	, rs ( exec, &rf )
 	, d ( &rf, &rs )
 	, f ( rp, &rf, &d, &wb )
 {
+	for ( int i = 0; i < NUM_ALU; i++ )
+		exec[ i ] = execute( this, rp, &rf, &wb );
 	cycles = 0;
 	num_code = code;
 	num_data = data;
@@ -606,7 +611,8 @@ void processor::flush ( int num )
 	f.flush( num );
 	d.flush( num );
 	rs.flush( num );
-	exec.flush( num );
+	for( int i = 0; i < NUM_ALU; i++ )
+		exec[ i ].flush( num );
 	wb.flush( num );
 
 	refresh_db();
@@ -616,6 +622,7 @@ void processor::refresh_db ()
 {
 	int i;
 	deque<instruction> insts;
+	instruction inst;
 
 	for ( i = 0; i < NUM_ARCH_REG; i++ )
 		rf.dirty[ i ] = false;
@@ -623,7 +630,11 @@ void processor::refresh_db ()
 	for ( i = 0; i < wb.buffer.size(); i++ )
 		insts.push_back( wb.buffer[ i ] );
 
-	insts.push_back( exec.inst_out );
+	for ( i = 0; i < NUM_ALU; i++ )
+	{
+		if ( !exec[ i ].halt )
+			insts.push_back( exec[ i ].inst_out );
+	}
 
 	for ( i = 0; i < rs.wait_buffer.size(); i++ )
 		insts.push_back( rs.wait_buffer[ i ] );
@@ -634,7 +645,8 @@ void processor::refresh_db ()
 
 	for ( i = 0; i < insts.size(); i++ )
 	{
-		switch( insts[ i ].op )
+		inst = insts[ i ];
+		switch( inst.op )
 		{
 			case ADD:
 			case ADDI:
@@ -644,7 +656,7 @@ void processor::refresh_db ()
 			case DIV:
 			case LD:
 			case LDI:
-				rf.dirty[ insts[ i ].dest ] = true;
+				rf.dirty[ inst.dest ] = true;
 				break;
 			default:
 				break;
@@ -654,8 +666,9 @@ void processor::refresh_db ()
 
 int processor::tick ()
 {
+	for ( int i = 0; i < NUM_ALU; i++ )
+		exec[ i ].exec();
 	completed_instructions += wb.write();
-	exec.exec();
 	rs.fetch_operands();
 	d.fetch_operands();
 	f.fetch_instruction();
@@ -665,7 +678,8 @@ int processor::tick ()
 
 int processor::tock ()
 {
-	exec.push();
+	for ( int i = 0; i < NUM_ALU; i++ )
+		exec[ i ].push();
 	rs.push();
 	d.push();
 	f.push();
