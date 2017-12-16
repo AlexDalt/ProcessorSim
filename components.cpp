@@ -123,6 +123,32 @@ void write_back::buffer_write ( instruction inst )
 	buffer[ i ].a1 = inst.a1;
 }
 
+void write_back::check ( int num )
+{
+	for ( int i = 0; i < buffer.size(); i++ )
+	{
+		instruction inst = buffer[ i ];
+		if ( inst.num < num && inst.op != PLACE_HOLDER )
+		{
+			switch ( inst.op )
+			{
+				case ADD:
+				case ADDI:
+				case SUB:
+				case SUBI:
+				case MUL:
+				case DIV:
+				case LD:
+				case LDI:
+					rf->dirty[ inst.dest ] = true;
+					break;
+				default:
+					break;
+			}
+		}
+	}
+}
+
 int write_back::write ()
 {
 	int comp = 0;
@@ -262,11 +288,12 @@ void execute::buffer_exec ( instruction i )
 	inst_in = i;
 }
 
-reservation_station::reservation_station ( execute *exec_in, register_file *rf_in )
+reservation_station::reservation_station ( write_back *wb_in, execute *exec_in, register_file *rf_in )
 {
 	for ( int i = 0; i < NUM_ALU; i++ )
 		exec[ i ] = &exec_in[ i ];
 	rf = rf_in;
+	wb = wb_in;
 }
 
 bool sort_inst ( instruction i1, instruction i2 )
@@ -297,6 +324,7 @@ void reservation_station::fetch_operands ()
 		{
 			inst = wait_buffer.front();
 			wait_buffer.pop_front();
+			wb->check( inst.num );
 
 			switch( inst.op )
 			{
@@ -594,7 +622,7 @@ void fetch::push ()
 processor::processor ( int code, int data, RAM *rp )
 	: ram ( rp )
 	, wb ( &rf, rp )
-	, rs ( exec, &rf )
+	, rs ( &wb, exec, &rf )
 	, d ( &rf, &rs )
 	, f ( rp, &rf, &d, &wb )
 {
