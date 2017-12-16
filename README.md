@@ -20,12 +20,9 @@ NOP			// no opperation
 ```
 
 ## TODO
-* Multiple execute units (2xALU, 1xLSU, 1xBU) w/ blocking issue
+* Multiple execute units (2xALU, 1xLSU, 1xBU)
 * Branch prediction into the fetch unit (static etc)
-* Sub pipelining
-* Reservation stations
 * Extend branch prediction mechanism
-* Avoid dependancies
 * Register renaming (with support for dynamic cross-allocation eg trivial functions 0/1)
 * Execution unit that supports vector instructions
 * Cache memory
