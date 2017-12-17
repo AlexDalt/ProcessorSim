@@ -323,7 +323,12 @@ void refresh_exec( WINDOW *win, int num )
 	}
 	mvwprintw( win, maxy-2, (maxx - 6)/2, "halt=%d", proc->exec[ num ].halt );
 	box( win, 0, 0 );
-	mvwprintw( win, 0, (maxx - 3)/2, "ALU" );
+	if ( num == 0 )
+		mvwprintw( win, 0, (maxx - 3)/2, "LSU" );
+	else if ( num == NUM_ALU - 1 )
+		mvwprintw( win, 0, (maxx - 2)/2, "BU" );
+	else
+		mvwprintw( win, 0, (maxx - 3)/2, "ALU" );
 	wrefresh( win );
 }
 

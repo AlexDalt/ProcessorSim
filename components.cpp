@@ -418,15 +418,51 @@ void reservation_station::push ()
 	sort( out_buffer.begin(), out_buffer.end(), sort_inst );
 	sort( wait_buffer.begin(), wait_buffer.end(), sort_inst );
 
-	for ( int i = 0; i < NUM_ALU; i++ )
+	bool lsu = true;
+	bool bu = true;
+	int current_exec = 1;
+	deque<instruction> copy;
+
+	while ( !out_buffer.empty() )
 	{
-		if ( !out_buffer.empty() && !exec[ i ]->wait )
+		instruction inst = out_buffer.front();
+		out_buffer.pop_front();
+
+		if ( inst.op == LD || inst.op == ST || inst.op == STI )
 		{
-			instruction inst = out_buffer.front();
-			out_buffer.pop_front();
-			exec[ i ]->buffer_exec( inst );
+			if ( !exec[ 0 ]->wait && bu )
+			{
+				exec[ 0 ]->buffer_exec( inst );
+				bu = false;
+			}
+			else
+				copy.push_back( inst );
+		}
+		else if ( inst.op == B || inst.op == BLEQ )
+		{
+			if ( !exec[ NUM_ALU - 1 ]->wait && lsu )
+			{
+				exec[ NUM_ALU - 1 ]->buffer_exec( inst );
+				lsu = false;
+			}
+			else
+				copy.push_back( inst );
+		}
+		else
+		{
+			while ( current_exec < NUM_ALU - 1 && exec[ current_exec ]->wait )
+				current_exec++;
+			if ( current_exec < NUM_ALU - 1)
+			{
+				exec[ current_exec ]->buffer_exec( inst );
+				current_exec++;
+			}
+			else
+				copy.push_back( inst );
 		}
 	}
+
+	out_buffer = copy;
 
 	int max = wait_buffer.size();
 	instruction inst;
