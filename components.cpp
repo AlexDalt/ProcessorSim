@@ -6,6 +6,7 @@ instruction::instruction ( string inst, string d, string b1, string b2 )
 {
 	d1 = false;
 	d2 = false;
+	taken = false;
 	if ( inst.compare ( "NOP" ) == 0 )
 		op = NOP;
 	else if ( inst.compare ( "ADD" ) == 0 )
@@ -217,16 +218,19 @@ void execute::exec ()
 					break;
 
 				case BLEQ:
-					if ( inst_out.dest <= inst_out.a1 )
+					if ( inst_out.dest <= inst_out.a1 && !inst_out.taken )
 					{
 						rf->pc = inst_out.pc + inst_out.a2;
+						proc->flush( inst_out.num );
+					}
+					else if ( inst_out.dest > inst_out.a1 && inst_out.taken )
+					{
+						rf->pc = inst_out.pc + 1;
 						proc->flush( inst_out.num );
 					}
 					break;
 
 				case B:
-					rf->pc = inst_out.pc + inst_out.dest;
-					proc->flush( inst_out.num );
 					break;
 
 				default:
@@ -554,12 +558,31 @@ void decode::push ()
 	}
 }
 
-fetch::fetch( RAM *rp, register_file *rf_in, decode *d_in, write_back *wb_in )
+bool branch_predictor::predict( instruction inst )
+{
+	switch ( BRANCH )
+	{
+		case 0:
+			return true;
+		case 1:
+			return false;
+		case 2:
+			if ( inst.a2 > 0 )
+				return false;
+			else
+				return true;
+		default:
+			return false;
+	}
+}
+
+fetch::fetch( RAM *rp, register_file *rf_in, branch_predictor *bp_in, decode *d_in, write_back *wb_in )
 {
 	ram = rp;
 	rf = rf_in;
 	wb = wb_in;
 	d = d_in;
+	bp = bp_in;
 	halt = false;
 	inst_count = 0;
 }
@@ -576,6 +599,19 @@ void fetch::fetch_instruction ()
 		inst = ram->code[ rf->pc ];
 		inst.num = inst_count;
 		inst.pc = rf->pc;
+		if ( inst.op == B )
+		{
+			rf->pc += inst.dest - 1;
+			inst.taken = true;
+		}
+		else if ( inst.op == BLEQ )
+		{
+			if ( bp->predict( inst ) )
+			{
+				rf->pc += inst.a2 - 1;
+				inst.taken = true;
+			}
+		}
 		inst_count++;
 		wb->insert_place_holder( inst.num );
 	}
@@ -598,7 +634,8 @@ processor::processor ( int code, int data, RAM *rp )
 	, wb ( &rf, rp )
 	, rs ( this, exec, &rf )
 	, d ( &rf, &rs )
-	, f ( rp, &rf, &d, &wb )
+	, bp ()
+	, f ( rp, &rf, &bp, &d, &wb )
 {
 	for ( int i = 0; i < NUM_ALU; i++ )
 		exec[ i ] = execute( this, rp, &rf, &wb );

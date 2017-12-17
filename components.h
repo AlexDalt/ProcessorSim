@@ -10,7 +10,15 @@ using namespace std;
 #define NUM_ARCH_REG 8
 #define NUM_PHYS_REG 8
 #define NUM_ALU 4
-#define RES_SIZE 8
+#define RES_SIZE 4
+
+#define BRANCH 2
+/*
+ * 0: static taken
+ * 1: static not taken
+ * 2: backwards taken, forwards not
+ * 3: dynamic
+ */
 
 enum Operations { NOP, ADD, ADDI, SUB, SUBI, MUL, DIV, LD, LDI, BLEQ, B, ST, STI, PLACE_HOLDER };
 
@@ -19,7 +27,7 @@ class instruction
 public:
 	Operations op;
 	int dest, a1, a2, num, pc;
-	bool d1, d2;
+	bool d1, d2, taken;
 
 	instruction( string inst="NOP", string d="", string b1="", string b2="" );
 };
@@ -110,6 +118,15 @@ public:
 	void flush ( int num );
 };
 
+class branch_predictor
+{
+public:
+	//int correct, predicted;
+
+	//branch_predictor ();
+	bool predict( instruction inst );
+};
+
 class fetch
 {
 public:
@@ -117,11 +134,12 @@ public:
 	RAM *ram;
 	decode *d;
 	write_back *wb;
+	branch_predictor *bp;
 	register_file *rf;
 	bool halt;
 	int inst_count;
 
-	fetch ( RAM *rp, register_file *rf_in, decode *d_in, write_back *wb_in );
+	fetch ( RAM *rp, register_file *rf_in, branch_predictor *bp, decode *d_in, write_back *wb_in );
 	void fetch_instruction ();
 	void push ();
 	void flush ( int num );
@@ -136,6 +154,7 @@ public:
 	execute exec[ NUM_ALU ];
 	reservation_station rs;
 	decode d;
+	branch_predictor bp;
 	fetch f;
 	int cycles;
 	int completed_instructions;
