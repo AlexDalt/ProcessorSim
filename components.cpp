@@ -4,8 +4,8 @@ int exec_times[13] = { 1, 1, 1, 1, 1, 4, 20, 4, 1, 3, 2, 1, 1 };
 
 instruction::instruction ( string inst, string d, string b1, string b2 )
 {
-	d1 = false;
-	d2 = false;
+	d1 = true;
+	d2 = true;
 	taken = false;
 	if ( inst.compare ( "NOP" ) == 0 )
 		op = NOP;
@@ -451,102 +451,100 @@ decode::decode ( register_file *rf_in, reservation_station *rs_in )
 
 void decode::flush ( int num )
 {
-	if ( inst_out.num > num )
+	deque<instruction> copy;
+	instruction inst;
+
+	while ( !insts.empty() )
 	{
-		halt = true;
-		wait = false;
+		inst = insts.front();
+		insts.pop_front();
+		if ( inst.num < num )
+			copy.push_back( inst );
 	}
+
+	insts = copy;
 }
 
 void decode::buffer_dec ( instruction i )
 {
 	if ( halt )
 	{
-		inst_in = i;
-		halt = false;
-		wait = false;
+		insts.push_back( i );
 	}
 }
 
 void decode::fetch_operands ()
 {
-	if ( !halt && !wait )
+	for ( int i = 0; i < insts.size(); i++ )
 	{
-		inst_out = inst_in;
-		switch( inst_out.op )
+		switch( insts[ i ].op )
 		{
 			// two registers
 			case ADD:
 			case SUB:
 			case MUL:
 			case DIV:
-				if ( !rf->dirty[ inst_out.a1 ] )
+				if ( insts[ i ].d1 && !rf->dirty[ insts[ i ].a1 ] )
 				{
-					inst_out.a1 = rf->r[ inst_out.a1 ];
-					inst_out.d1 = false;
+					insts[ i ].a1 = rf->r[ insts[ i ].a1 ];
+					insts[ i ].d1 = false;
 				}
-				else
-					inst_out.d1 = true;
-
-				if ( !rf->dirty[ inst_out.a2 ] )
+				if ( insts[ i ].d2 && !rf->dirty[ insts[ i ].a2 ] )
 				{
-					inst_out.a2 = rf->r[ inst_out.a2 ];
-					inst_out.d2 = false;
+					insts[ i ].a2 = rf->r[ insts[ i ].a2 ];
+					insts[ i ].d2 = false;
 				}
-				else
-					inst_out.d2 = true;
-				rf->dirty[ inst_out.dest ] = true;
+				rf->dirty[ insts[ i ].dest ] = true;
 				break;
 
 			case BLEQ:
 			case ST:
-				if ( !rf->dirty[ inst_out.dest ] )
+				if ( insts[ i ].d1 && !rf->dirty[ insts[ i ].dest ] )
 				{
-					inst_out.dest = rf->r[ inst_out.dest ];
-					inst_out.d1 = false;
+					insts[ i ].dest = rf->r[ insts[ i ].dest ];
+					insts[ i ].d1 = false;
 				}
-				else
-					inst_out.d1 = true;
 
-				if ( !rf->dirty[ inst_out.a1 ] )
+				if ( insts[ i ].d2 && !rf->dirty[ insts[ i ].a1 ] )
 				{
-					inst_out.a1 = rf->r[ inst_out.a1 ];
-					inst_out.d2 = false;
+					insts[ i ].a1 = rf->r[ insts[ i ].a1 ];
+					insts[ i ].d2 = false;
 				}
-				else
-					inst_out.d2 = true;
 				break;
 
 				// one register
 			case ADDI:
 			case SUBI:
 			case LD:
-				if ( !rf->dirty[ inst_out.a1 ] )
+				if ( insts[ i ].d1 && !rf->dirty[ insts[ i ].a1 ] )
 				{
-					inst_out.a1 = rf->r[ inst_out.a1 ];
-					inst_out.d1 = false;
+					insts[ i ].a1 = rf->r[ insts[ i ].a1 ];
+					insts[ i ].d1 = false;
 				}
-				else
-					inst_out.d1 = true;
-				rf->dirty[ inst_out.dest ] = true;
-				inst_out.d2 = false;
+				rf->dirty[ insts[ i ].dest ] = true;
+				insts[ i ].d2 = false;
 				break;
 
 			case LDI:
-				rf->dirty[ inst_out.dest ] = true;
+				rf->dirty[ insts[ i ].dest ] = true;
+				insts[ i ].d1 = false;
+				insts[ i ].d2 = false;
 				break;
 
 			case STI:
-				if ( !rf->dirty[ inst_out.dest ] )
+				if ( !rf->dirty[ insts[ i ].dest ] )
 				{
-					inst_out.dest = rf->r[ inst_out.dest ];
-					inst_out.d1 = false;
+					insts[ i ].dest = rf->r[ insts[ i ].dest ];
+					insts[ i ].d1 = false;
 				}
 				else
-					inst_out.d1 = true;
+					insts[ i ].d1 = true;
+				insts[ i ].d2 = false;
 				break;
 
 			default:
+				insts[ i ].d1 = false;
+				insts[ i ].d2 = false;
 				break;
 		}
 	}
@@ -554,14 +552,10 @@ void decode::fetch_operands ()
 
 void decode::push ()
 {
-	if ( rs->wait_buffer.size() + rs->out_buffer.size() >= RES_SIZE )
-		wait = true;
-	else
-		wait = false;
-	if ( !wait && !halt )
+	while ( !insts.empty() && rs->wait_buffer.size() + rs->out_buffer.size() < RES_SIZE )
 	{
-		rs->buffer_inst( inst_out );
-		halt = true;
+		rs->buffer_inst( insts.front() );
+		insts.pop_front();
 	}
 }
 
@@ -609,12 +603,22 @@ fetch::fetch( RAM *rp, register_file *rf_in, branch_predictor *bp_in, decode *d_
 
 void fetch::flush ( int num )
 {
-	halt = false;
+	deque<instruction> copy;
+	instruction inst;
+	while ( !insts.empty() )
+	{
+		inst = insts.front();
+		insts.pop_front();
+		if ( inst.num < num )
+			copy.push_back( inst );
+	}
+	insts = copy;
 }
 
 void fetch::fetch_instruction ()
 {
-	if ( !halt )
+	instruction inst;
+	while ( insts.size() < NUM_ALU - 2 )
 	{
 		inst = ram->code[ rf->pc ];
 		inst.num = inst_count;
@@ -633,19 +637,22 @@ void fetch::fetch_instruction ()
 			}
 		}
 		inst_count++;
+		insts.push_back( inst );
 		wb->insert_place_holder( inst.num );
+		rf->pc++;
 	}
 }
 
 void fetch::push ()
 {
-	if ( d->wait )
-		halt = true;
-	else
-	{
+	if ( d->insts.size() == 0 )
 		halt = false;
-		d->buffer_dec( inst );
-		rf->pc++;
+	else
+		halt = true;
+	while ( d->insts.size() < NUM_ALU - 2)
+	{
+		d->buffer_dec( insts.front() );
+		insts.pop_front();
 	}
 }
 

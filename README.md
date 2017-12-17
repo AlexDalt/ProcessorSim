@@ -20,8 +20,7 @@ NOP			// no opperation
 ```
 
 ## TODO
-* Multiple execute units (2xALU, 1xLSU, 1xBU)
-* Branch prediction into the fetch unit (static etc)
+* Name units
 * Fetch and decode multiple instructions per cycle
 * Extend branch prediction mechanism
 * Register renaming (with support for dynamic cross-allocation eg trivial functions 0/1)

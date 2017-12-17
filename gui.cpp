@@ -135,59 +135,56 @@ void refresh_fetch( WINDOW *win )
 {
 	int maxx, maxy;
 	instruction inst;
-	if( !proc->f.halt )
-	{
-		inst = ram->code[ proc->rf.pc ];
-		inst.num = proc->f.inst_count;
-	}
-	else
-		inst = proc->f.inst;
 
 	getmaxyx( win, maxy, maxx );
 	werase( win );
-	switch ( inst.op )
+	for ( int i = 0; i < proc->f.insts.size(); i++ )
 	{
-		case NOP:
-			mvwprintw( win, 1, 2, "%d: NOP", inst.num);
-			break;
-		case ADD:
-			mvwprintw( win, 1, 2, "%d: ADD r%d r%d r%d", inst.num, inst.dest, inst.a1, inst.a2 );
-			break;
-		case ADDI:
-			mvwprintw( win, 1, 2, "%d: ADDI r%d r%d %d", inst.num, inst.dest, inst.a1, inst.a2 );
-			break;
-		case SUB:
-			mvwprintw( win, 1, 2, "%d: SUB r%d r%d r%d", inst.num, inst.dest, inst.a1, inst.a2);
-			break;
-		case SUBI:
-			mvwprintw( win, 1, 2, "%d: SUBI r%d r%d %d", inst.num, inst.dest, inst.a1, inst.a2);
-			break;
-		case MUL:
-			mvwprintw( win, 1, 2, "%d: MUL r%d r%d r%d", inst.num, inst.dest, inst.a1, inst.a2);
-			break;
-		case DIV:
-			mvwprintw( win, 1, 2, "%d: DIV  r%d r%d r%d", inst.num, inst.dest, inst.a1, inst.a2);
-			break;
-		case LD:
-			mvwprintw( win, 1, 2, "%d: LD r%d r%d", inst.num, inst.dest, inst.a1 );
-			break;
-		case LDI:
-			mvwprintw( win, 1, 2, "%d: LDI r%d %d", inst.num, inst.dest, inst.a1 );
-			break;
-		case BLEQ:
-			mvwprintw( win, 1, 2, "%d: BLEQ r%d r%d %d", inst.num, inst.dest, inst.a1, inst.a2);
-			break;
-		case B:
-			mvwprintw( win, 1, 2, "%d: B %d", inst.num, inst.dest );
-			break;
-		case ST:
-			mvwprintw( win, 1, 2, "%d: ST r%d r%d", inst.num, inst.dest, inst.a1 );
-			break;
-		case STI:
-			mvwprintw( win, 1, 2, "%d: STI r%d %d", inst.num, inst.dest, inst.a1 );
-			break;
-		default:
-			break;
+		inst = proc->f.insts[ i ];
+		switch ( inst.op )
+		{
+			case NOP:
+				mvwprintw( win, i+1, 2, "%d: NOP", inst.num);
+				break;
+			case ADD:
+				mvwprintw( win, i+1, 2, "%d: ADD r%d r%d r%d", inst.num, inst.dest, inst.a1, inst.a2 );
+				break;
+			case ADDI:
+				mvwprintw( win, i+1, 2, "%d: ADDI r%d r%d %d", inst.num, inst.dest, inst.a1, inst.a2 );
+				break;
+			case SUB:
+				mvwprintw( win, i+1, 2, "%d: SUB r%d r%d r%d", inst.num, inst.dest, inst.a1, inst.a2);
+				break;
+			case SUBI:
+				mvwprintw( win, i+1, 2, "%d: SUBI r%d r%d %d", inst.num, inst.dest, inst.a1, inst.a2);
+				break;
+			case MUL:
+				mvwprintw( win, i+1, 2, "%d: MUL r%d r%d r%d", inst.num, inst.dest, inst.a1, inst.a2);
+				break;
+			case DIV:
+				mvwprintw( win, i+1, 2, "%d: DIV  r%d r%d r%d", inst.num, inst.dest, inst.a1, inst.a2);
+				break;
+			case LD:
+				mvwprintw( win, i+1, 2, "%d: LD r%d r%d", inst.num, inst.dest, inst.a1 );
+				break;
+			case LDI:
+				mvwprintw( win, i+1, 2, "%d: LDI r%d %d", inst.num, inst.dest, inst.a1 );
+				break;
+			case BLEQ:
+				mvwprintw( win, i+1, 2, "%d: BLEQ r%d r%d %d", inst.num, inst.dest, inst.a1, inst.a2);
+				break;
+			case B:
+				mvwprintw( win, i+1, 2, "%d: B %d", inst.num, inst.dest );
+				break;
+			case ST:
+				mvwprintw( win, i+1, 2, "%d: ST r%d r%d", inst.num, inst.dest, inst.a1 );
+				break;
+			case STI:
+				mvwprintw( win, i+1, 2, "%d: STI r%d %d", inst.num, inst.dest, inst.a1 );
+				break;
+			default:
+				break;
+		}
 	}
 	mvwprintw( win, maxy-2, (maxx - 6)/2, "halt=%d", proc->f.halt );
 	box( win, 0, 0 );
@@ -211,53 +208,55 @@ void refresh_bp( WINDOW *win )
 
 void refresh_decode( WINDOW *win )
 {
-	instruction inst = proc->d.inst_in;
+	instruction inst;
 	int maxx, maxy;
 	getmaxyx( win, maxy, maxx );
 
 	werase( win );
-	if ( !(proc->d.halt) && !(inst.op == NOP) )
+
+	for ( int i = 0; i < proc->d.insts.size(); i++ )
 	{
+		inst = proc->d.insts[ i ];
 		switch ( inst.op )
 		{
 			case NOP:
-				mvwprintw( win, 1, 2, "%d: NOP");
+				mvwprintw( win, i+1, 2, "%d: NOP");
 				break;
 			case ADD:
-				mvwprintw( win, 1, 2, "%d: ADD r%d r%d r%d", inst.num, inst.dest, inst.a1, inst.a2 );
+				mvwprintw( win, i+1, 2, "%d: ADD r%d r%d r%d", inst.num, inst.dest, inst.a1, inst.a2 );
 				break;
 			case ADDI:
-				mvwprintw( win, 1, 2, "%d: ADDI r%d r%d %d", inst.num, inst.dest, inst.a1, inst.a2 );
+				mvwprintw( win, i+1, 2, "%d: ADDI r%d r%d %d", inst.num, inst.dest, inst.a1, inst.a2 );
 				break;
 			case SUB:
-				mvwprintw( win, 1, 2, "%d: SUB r%d r%d r%d", inst.num, inst.dest, inst.a1, inst.a2);
+				mvwprintw( win, i+1, 2, "%d: SUB r%d r%d r%d", inst.num, inst.dest, inst.a1, inst.a2);
 				break;
 			case SUBI:
-				mvwprintw( win, 1, 2, "%d: SUBI r%d r%d %d", inst.num, inst.dest, inst.a1, inst.a2);
+				mvwprintw( win, i+1, 2, "%d: SUBI r%d r%d %d", inst.num, inst.dest, inst.a1, inst.a2);
 				break;
 			case MUL:
-				mvwprintw( win, 1, 2, "%d: MUL r%d r%d r%d", inst.num, inst.dest, inst.a1, inst.a2);
+				mvwprintw( win, i+1, 2, "%d: MUL r%d r%d r%d", inst.num, inst.dest, inst.a1, inst.a2);
 				break;
 			case DIV:
-				mvwprintw( win, 1, 2, "%d: DIV  r%d r%d r%d", inst.num, inst.dest, inst.a1, inst.a2);
+				mvwprintw( win, i+1, 2, "%d: DIV  r%d r%d r%d", inst.num, inst.dest, inst.a1, inst.a2);
 				break;
 			case LD:
-				mvwprintw( win, 1, 2, "%d: LD r%d r%d", inst.num, inst.dest, inst.a1 );
+				mvwprintw( win, i+1, 2, "%d: LD r%d r%d", inst.num, inst.dest, inst.a1 );
 				break;
 			case LDI:
-				mvwprintw( win, 1, 2, "%d: LDI r%d %d", inst.num, inst.dest, inst.a1 );
+				mvwprintw( win, i+1, 2, "%d: LDI r%d %d", inst.num, inst.dest, inst.a1 );
 				break;
 			case BLEQ:
-				mvwprintw( win, 1, 2, "%d: BLEQ r%d r%d %d", inst.num, inst.dest, inst.a1, inst.a2);
+				mvwprintw( win, i+1, 2, "%d: BLEQ r%d r%d %d", inst.num, inst.dest, inst.a1, inst.a2);
 				break;
 			case B:
-				mvwprintw( win, 1, 2, "%d: B %d", inst.num, inst.dest );
+				mvwprintw( win, i+1, 2, "%d: B %d", inst.num, inst.dest );
 				break;
 			case ST:
-				mvwprintw( win, 1, 2, "%d: ST r%d r%d", inst.num, inst.dest, inst.a1 );
+				mvwprintw( win, i+1, 2, "%d: ST r%d r%d", inst.num, inst.dest, inst.a1 );
 				break;
 			case STI:
-				mvwprintw( win, 1, 2, "%d: STI r%d %d", inst.num, inst.dest, inst.a1 );
+				mvwprintw( win, i+1, 2, "%d: STI r%d %d", inst.num, inst.dest, inst.a1 );
 				break;
 			default:
 				break;

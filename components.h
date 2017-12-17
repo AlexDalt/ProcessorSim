@@ -117,7 +117,7 @@ public:
 class decode
 {
 public:
-	instruction inst_in, inst_out;
+	deque<instruction> insts;
 	reservation_station *rs;
 	register_file *rf;
 	bool wait, halt;
@@ -132,7 +132,7 @@ public:
 class fetch
 {
 public:
-	instruction inst;
+	deque<instruction> insts;
 	RAM *ram;
 	decode *d;
 	write_back *wb;
