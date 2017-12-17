@@ -198,10 +198,14 @@ void refresh_fetch( WINDOW *win )
 void refresh_bp( WINDOW *win )
 {
 	int maxx, maxy;
+	int predicted = proc->bp.predicted;
+	int correct = proc->bp.correct;
 	getmaxyx( win, maxy, maxx );
 	werase( win );
 	box( win, 0, 0 );
 	mvwprintw( win, 0, (maxx - 16)/2, "branch predictor" );
+	if( predicted > 0 )
+		mvwprintw( win, 1, (maxx - 13)/2, "correct=%.3f", (float)correct/(float)predicted );
 	wrefresh( win );
 }
 

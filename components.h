@@ -70,6 +70,16 @@ public:
 
 class processor;
 
+class branch_predictor
+{
+public:
+	int correct, predicted;
+
+	branch_predictor ();
+	bool predict ( instruction inst );
+	void result ( bool cor );
+};
+
 class execute
 {
 public:
@@ -79,9 +89,10 @@ public:
 	RAM *ram;
 	register_file *rf;
 	write_back *wb;
+	branch_predictor *bp;
 	int rem_exec;
 
-	execute ( processor *proc_in=NULL, RAM *rp=NULL, register_file *rf_in=NULL, write_back *out=NULL );
+	execute ( processor *proc_in=NULL, RAM *rp=NULL, register_file *rf_in=NULL, write_back *out=NULL, branch_predictor *bp_in=NULL );
 	void buffer_exec ( instruction i );
 	void flush ( int num );
 	void exec ();
@@ -116,15 +127,6 @@ public:
 	void fetch_operands ();
 	void push ();
 	void flush ( int num );
-};
-
-class branch_predictor
-{
-public:
-	//int correct, predicted;
-
-	//branch_predictor ();
-	bool predict( instruction inst );
 };
 
 class fetch

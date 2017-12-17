@@ -159,7 +159,7 @@ int write_back::write ()
 	return comp;
 }
 
-execute::execute( processor *proc_in, RAM *rp, register_file *rf_in, write_back *out )
+execute::execute( processor *proc_in, RAM *rp, register_file *rf_in, write_back *out, branch_predictor *bp_in )
 {
 	proc = proc_in;
 	ram = rp;
@@ -168,6 +168,7 @@ execute::execute( processor *proc_in, RAM *rp, register_file *rf_in, write_back 
 	halt = true;
 	wait = false;
 	finished = true;
+	bp = bp_in;
 }
 
 void execute::exec ()
@@ -222,11 +223,17 @@ void execute::exec ()
 					{
 						rf->pc = inst_out.pc + inst_out.a2;
 						proc->flush( inst_out.num );
+						bp->result( false );
 					}
 					else if ( inst_out.dest > inst_out.a1 && inst_out.taken )
 					{
 						rf->pc = inst_out.pc + 1;
 						proc->flush( inst_out.num );
+						bp->result( false );
+					}
+					else
+					{
+						bp->result( true );
 					}
 					break;
 
@@ -558,7 +565,13 @@ void decode::push ()
 	}
 }
 
-bool branch_predictor::predict( instruction inst )
+branch_predictor::branch_predictor ()
+{
+	predicted = 0;
+	correct = 0;
+}
+
+bool branch_predictor::predict ( instruction inst )
 {
 	switch ( BRANCH )
 	{
@@ -574,6 +587,13 @@ bool branch_predictor::predict( instruction inst )
 		default:
 			return false;
 	}
+}
+
+void branch_predictor::result ( bool cor )
+{
+	predicted++;
+	if ( cor )
+		correct++;
 }
 
 fetch::fetch( RAM *rp, register_file *rf_in, branch_predictor *bp_in, decode *d_in, write_back *wb_in )
@@ -638,7 +658,7 @@ processor::processor ( int code, int data, RAM *rp )
 	, f ( rp, &rf, &bp, &d, &wb )
 {
 	for ( int i = 0; i < NUM_ALU; i++ )
-		exec[ i ] = execute( this, rp, &rf, &wb );
+		exec[ i ] = execute( this, rp, &rf, &wb, &bp );
 	cycles = 0;
 	num_code = code;
 	num_data = data;
