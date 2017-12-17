@@ -743,20 +743,23 @@ void processor::check ( int num )
 	for ( i = 0; i < rs.out_buffer.size(); i++ )
 	{
 		inst = rs.out_buffer[ i ];
-		switch ( inst.op )
+		if ( inst.num < num )
 		{
-			case ADD:
-			case ADDI:
-			case SUB:
-			case SUBI:
-			case MUL:
-			case DIV:
-			case LD:
-			case LDI:
-				rf.dirty[ inst.dest ] = true;
-				break;
-			default:
-				break;
+			switch ( inst.op )
+			{
+				case ADD:
+				case ADDI:
+				case SUB:
+				case SUBI:
+				case MUL:
+				case DIV:
+				case LD:
+				case LDI:
+					rf.dirty[ inst.dest ] = true;
+					break;
+				default:
+					break;
+			}
 		}
 	}
 }
