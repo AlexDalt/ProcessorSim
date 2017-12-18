@@ -9,15 +9,15 @@ using namespace std;
 
 #define NUM_ARCH_REG 8
 #define NUM_PHYS_REG 8
-#define NUM_ALU 4
-#define RES_SIZE 4
+#define NUM_ALU 6
+#define RES_SIZE 8
 
 #define BRANCH 2
 /*
  * 0: static taken
  * 1: static not taken
  * 2: backwards taken, forwards not
- * 3: dynamic
+ * 3: 2-bit saturating counter
  */
 
 enum Operations { NOP, ADD, ADDI, SUB, SUBI, MUL, DIV, LD, LDI, BLEQ, B, ST, STI, PLACE_HOLDER };
@@ -74,10 +74,11 @@ class branch_predictor
 {
 public:
 	int correct, predicted;
+	deque<instruction> history;
 
 	branch_predictor ();
 	bool predict ( instruction inst );
-	void result ( bool cor );
+	void result ( instruction inst, bool cor );
 };
 
 class execute

@@ -223,17 +223,17 @@ void execute::exec ()
 					{
 						rf->pc = inst_out.pc + inst_out.a2;
 						proc->flush( inst_out.num );
-						bp->result( false );
+						bp->result( inst_out, false );
 					}
 					else if ( inst_out.dest > inst_out.a1 && inst_out.taken )
 					{
 						rf->pc = inst_out.pc + 1;
 						proc->flush( inst_out.num );
-						bp->result( false );
+						bp->result( inst_out, false );
 					}
 					else
 					{
-						bp->result( true );
+						bp->result( inst_out, true );
 					}
 					break;
 
@@ -288,8 +288,13 @@ bool sort_inst ( instruction i1, instruction i2 )
 
 void reservation_station::buffer_inst ( instruction inst )
 {
-	wait_buffer.push_back( inst );
-	sort( wait_buffer.begin(), wait_buffer.end(), sort_inst );
+	if ( !inst.d1 && !inst.d2 )
+		out_buffer.push_back( inst );
+	else
+		wait_buffer.push_back( inst );
+
+	sort ( wait_buffer.begin(), wait_buffer.end(), sort_inst );
+	sort ( out_buffer.begin(), out_buffer.end(), sort_inst );
 }
 
 void reservation_station::fetch_operands ()
@@ -614,16 +619,64 @@ bool branch_predictor::predict ( instruction inst )
 				return false;
 			else
 				return true;
-		default:
-			return false;
+		case 3:
+			bool entry = false;
+			int i;
+			for ( i = 0; i < history.size(); i++ )
+				if ( history[ i ].pc == inst.pc )
+				{
+					entry = true;
+					break;
+				}
+
+			if ( entry )
+			{
+				if ( history[ i ].num > 1 )
+					return true;
+				else
+					return false;
+			}
+			else
+			{
+				if ( inst.a2 > 0 )
+				{
+					inst.num = 1;
+					history.push_back( inst );
+					return false;
+				}
+				else
+				{
+					inst.num = 2;
+					history.push_back( inst );
+					return true;
+				}
+			}
 	}
 }
 
-void branch_predictor::result ( bool cor )
+void branch_predictor::result ( instruction inst, bool cor )
 {
 	predicted++;
 	if ( cor )
 		correct++;
+
+	if ( BRANCH == 3 )
+	{
+		int i;
+		for ( i = 0; i < history.size(); i++ )
+		{
+			if ( history[ i ].pc == inst.pc )
+				break;
+		}
+		if ( history[ i ].num > 1 && !cor )
+			history[ i ].num--;
+		else if ( history[ i ].num == 2 && cor )
+			history[ i ].num++;
+		else if ( history[ i ].num < 2 && !cor )
+			history[ i ].num++;
+		else if ( history[ i ].num == 1 && cor )
+			history[ i ].num--;
+	}
 }
 
 fetch::fetch( RAM *rp, register_file *rf_in, branch_predictor *bp_in, decode *d_in, write_back *wb_in )
