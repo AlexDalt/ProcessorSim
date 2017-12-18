@@ -12,7 +12,7 @@ using namespace std;
 #define NUM_ALU 6
 #define RES_SIZE 8
 
-#define BRANCH 2
+#define BRANCH 3
 /*
  * 0: static taken
  * 1: static not taken
