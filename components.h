@@ -8,7 +8,7 @@
 using namespace std;
 
 #define NUM_ARCH_REG 8
-#define NUM_PHYS_REG 8
+#define NUM_PHYS_REG 64
 #define NUM_ALU 6
 #define RES_SIZE 8
 
@@ -27,7 +27,8 @@ class instruction
 public:
 	Operations op;
 	int dest, a1, a2, num, pc;
-	bool d1, d2, taken;
+	bool d1, d2, taken, renamed;
+	int old_r[ NUM_ARCH_REG ];
 
 	instruction( string inst="NOP", string d="", string b1="", string b2="" );
 };
@@ -48,8 +49,9 @@ class register_file
 {
 public:
 	int pc;
-	int r[NUM_ARCH_REG];
-	bool dirty[NUM_ARCH_REG];
+	int r[ NUM_ARCH_REG ];
+	int p[ NUM_PHYS_REG ];
+	bool dirty[ NUM_PHYS_REG ];
 
 	register_file();
 };
@@ -125,6 +127,7 @@ public:
 
 	decode ( register_file *rf_in, reservation_station *rs_in );
 	void buffer_dec ( instruction i );
+	instruction rename( instruction i );
 	void fetch_operands ();
 	void push ();
 	void flush ( int num );
