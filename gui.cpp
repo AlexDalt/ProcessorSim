@@ -199,7 +199,6 @@ void refresh_fetch( WINDOW *win )
 				break;
 		}
 	}
-	mvwprintw( win, maxy-2, (maxx - 6)/2, "halt=%d", proc->f.halt );
 	box( win, 0, 0 );
 	mvwprintw( win, 0, (maxx - 5)/2, "fetch" );
 	wrefresh( win );
@@ -276,7 +275,6 @@ void refresh_decode( WINDOW *win )
 		}
 	}
 
-	mvwprintw( win, maxy-2, (maxx - 6)/2, "halt=%d", proc->d.wait );
 	box( win, 0, 0 );
 	mvwprintw( win, 0, (maxx-6)/2, "decode" );
 	wrefresh( win );
@@ -453,7 +451,6 @@ void refresh_rs( WINDOW *win )
 		}
 	}
 
-	mvwprintw( win, maxy - 2, (maxx - 6)/2, "halt=%d", (proc->rs.wait_buffer.size() + proc->rs.out_buffer.size() == 0) );
 	box( win, 0, 0 );
 	mvwprintw( win, 0, (maxx - 19)/2, "reservation station" );
 	wrefresh( win );
@@ -517,7 +514,6 @@ void refresh_wb( WINDOW *win )
 				break;
 		}
 	}
-	mvwprintw( win, maxy - 2, (maxx - 6)/2, "halt=%d", (proc->wb.buffer.size() == 0) );
 	box( win, 0, 0 );
 	mvwprintw( win, 0, (maxx - 14)/2, "reorder buffer" );
 	wrefresh( win );
@@ -552,9 +548,9 @@ void init_ncurses()
 	ram_win = create_win( ram_win_h, ram_win_w, 1, 0 );
 	mvwprintw( ram_win, 0, (ram_win_w - 7)/2, "MEMORY" );
 
-	data_win = create_subwin( ram_win, ram_win_h/2 - 1, ram_win_w - 2, 2, 1 );
-
-	program_win = create_subwin( ram_win, ram_win_h/2 - 1, ram_win_w - 2, ram_win_h/2 + 1, 1 );
+	data_win = create_subwin( ram_win, ram_win_h/2 - 1, ram_win_w - 2, ram_win_h/2 + 1, 1 ); 
+		
+	program_win = create_subwin( ram_win, ram_win_h/2 - 1, ram_win_w - 2, 2, 1 );
 
 	int proc_win_h = LINES - 5;
 	int proc_win_w = COLS - ram_win_w;

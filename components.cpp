@@ -452,7 +452,7 @@ void reservation_station::push ()
 			else
 				copy.push_back( inst );
 		}
-		else if ( inst.op == B || inst.op == BLEQ )
+		else if ( inst.op == B || inst.op == BLEQ || NUM_ALU == 2 )
 		{
 			if ( !exec[ NUM_ALU - 1 ]->wait && lsu )
 			{

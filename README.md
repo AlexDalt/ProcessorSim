@@ -20,6 +20,5 @@ NOP			// no opperation
 ```
 
 ## TODO
-* Register renaming (with support for dynamic cross-allocation eg trivial functions 0/1)
 * Execution unit that supports vector instructions
 * Cache memory
